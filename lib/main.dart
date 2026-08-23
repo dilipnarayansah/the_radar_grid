@@ -25,7 +25,7 @@ class RadarGridApp extends StatelessWidget {
   }
 }
 
-// ---------------- DATA MODEL ----------------
+// ---------------- DATA MODELS ----------------
 class GridItem {
   final String id;
   final String title;
@@ -52,6 +52,15 @@ class GridItem {
   });
 }
 
+class ChatMessage {
+  final String sender;
+  final String text;
+  final String time;
+  final bool isMe;
+
+  ChatMessage({required this.sender, required this.text, required this.time, required this.isMe});
+}
+
 // ---------------- ROOT NAVIGATION SHELL ----------------
 class MainRadarShell extends StatefulWidget {
   const MainRadarShell({super.key});
@@ -67,6 +76,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   final double userLng = 85.1376;
 
   late List<GridItem> _items;
+  final Map<String, List<ChatMessage>> _chats = {};
 
   @override
   void initState() {
@@ -121,9 +131,16 @@ class _MainRadarShellState extends State<MainRadarShell> {
         icon: Icons.camera_alt,
       ),
     ];
+
+    // Seed initial demo message threads
+    _chats['Rohan Tech Lab'] = [
+      ChatMessage(sender: 'Rohan Tech Lab', text: 'Hey! Need help setting up Linux or Python environment?', time: '10:45 AM', isMe: false),
+    ];
+    _chats['Verma Mobile Care'] = [
+      ChatMessage(sender: 'Verma Mobile Care', text: 'Original parts available with 6 months warranty.', time: '09:12 AM', isMe: false),
+    ];
   }
 
-  // Proximity Calculation Engine
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     const p = 0.017453292519943295;
     final a = 0.5 -
@@ -138,6 +155,30 @@ class _MainRadarShellState extends State<MainRadarShell> {
     });
   }
 
+  void _openChatWith(BuildContext context, String providerName) {
+    if (!_chats.containsKey(providerName)) {
+      _chats[providerName] = [
+        ChatMessage(sender: providerName, text: 'Hi! How can I help you today?', time: 'Just now', isMe: false),
+      ];
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => ActiveChatScreen(
+          providerName: providerName,
+          messages: _chats[providerName]!,
+          onSendMessage: (msg) {
+            setState(() {
+              _chats[providerName]!.add(
+                ChatMessage(sender: 'Me', text: msg, time: 'Just now', isMe: true),
+              );
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screens = [
@@ -147,14 +188,19 @@ class _MainRadarShellState extends State<MainRadarShell> {
         userLng: userLng,
         calcDistance: calculateDistance,
         onAdd: _addNewListing,
+        onOpenChat: (name) => _openChatWith(context, name),
       ),
       MapRadarScreen(
         items: _items,
         userLat: userLat,
         userLng: userLng,
         calcDistance: calculateDistance,
+        onSelectNode: (item) => _openChatWith(context, item.title),
       ),
-      const MessagesScreen(),
+      ChatListScreen(
+        chats: _chats,
+        onOpenChat: (name) => _openChatWith(context, name),
+      ),
       const ProfileScreen(),
     ];
 
@@ -185,6 +231,7 @@ class ExploreFeed extends StatefulWidget {
   final double userLng;
   final Function(double, double, double, double) calcDistance;
   final Function(GridItem) onAdd;
+  final Function(String) onOpenChat;
 
   const ExploreFeed({
     super.key,
@@ -193,6 +240,7 @@ class ExploreFeed extends StatefulWidget {
     required this.userLng,
     required this.calcDistance,
     required this.onAdd,
+    required this.onOpenChat,
   });
 
   @override
@@ -201,6 +249,7 @@ class ExploreFeed extends StatefulWidget {
 
 class _ExploreFeedState extends State<ExploreFeed> {
   String _activeCategory = 'All';
+  String _searchQuery = '';
 
   final List<Map<String, dynamic>> categories = [
     {'name': 'All', 'icon': Icons.bolt},
@@ -215,49 +264,85 @@ class _ExploreFeedState extends State<ExploreFeed> {
     final titleCtrl = TextEditingController();
     final subCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
+    String selectedCat = 'Tech';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF15151C),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, top: 20, left: 20, right: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('⚡ Broadcast to 2.0 km Radar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 14),
-            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title / Service Name', border: OutlineInputBorder())),
-            const SizedBox(height: 10),
-            TextField(controller: subCtrl, decoration: const InputDecoration(labelText: 'Short Description', border: OutlineInputBorder())),
-            const SizedBox(height: 10),
-            TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: 'Price (e.g., ₹200/hr, ₹50)', border: OutlineInputBorder())),
-            const SizedBox(height: 14),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676), minimumSize: const Size.fromHeight(48)),
-              onPressed: () {
-                if (titleCtrl.text.isNotEmpty) {
-                  widget.onAdd(GridItem(
-                    id: DateTime.now().toString(),
-                    title: titleCtrl.text,
-                    subtitle: subCtrl.text,
-                    category: 'Tech',
-                    tag: 'LIVE BROADCAST',
-                    lat: widget.userLat + 0.002,
-                    lng: widget.userLng + 0.002,
-                    price: priceCtrl.text.isEmpty ? 'Negotiable' : priceCtrl.text,
-                    rating: 5.0,
-                    icon: Icons.offline_bolt,
-                  ));
-                  Navigator.pop(ctx);
-                }
-              },
-              child: const Text('Post to Live Grid', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 20),
-          ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom + 20, top: 20, left: 20, right: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text('⚡ Broadcast to Radar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  CircleAvatar(radius: 4, backgroundColor: Color(0xFF00E676)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: titleCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Listing / Service Name',
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E28),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: subCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Description / What you offer',
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E28),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: priceCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Price (e.g. ₹200/hr, ₹50/meal)',
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E28),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00E676),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  if (titleCtrl.text.isNotEmpty) {
+                    widget.onAdd(GridItem(
+                      id: DateTime.now().toString(),
+                      title: titleCtrl.text,
+                      subtitle: subCtrl.text.isEmpty ? 'Local Grid Resource' : subCtrl.text,
+                      category: selectedCat,
+                      tag: 'BROADCAST',
+                      lat: widget.userLat + 0.002,
+                      lng: widget.userLng + 0.002,
+                      price: priceCtrl.text.isEmpty ? 'Negotiable' : priceCtrl.text,
+                      rating: 5.0,
+                      icon: Icons.offline_bolt,
+                    ));
+                    Navigator.pop(ctx);
+                  }
+                },
+                child: const Text('Broadcast Signal Live', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -265,9 +350,12 @@ class _ExploreFeedState extends State<ExploreFeed> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _activeCategory == 'All'
-        ? widget.items
-        : widget.items.where((i) => i.category == _activeCategory).toList();
+    final filtered = widget.items.where((i) {
+      final matchesCat = _activeCategory == 'All' || i.category == _activeCategory;
+      final matchesSearch = i.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          i.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesCat && matchesSearch;
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -314,12 +402,26 @@ class _ExploreFeedState extends State<ExploreFeed> {
                 child: Container(
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(color: const Color(0xFF15151C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF272732))),
-                  child: const Row(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF15151C),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF272732)),
+                  ),
+                  child: Row(
                     children: [
-                      Icon(Icons.search, color: Color(0xFF00E676), size: 20),
-                      SizedBox(width: 8),
-                      Text('Search skills, trades, rentals...', style: TextStyle(color: Color(0xFF71717A), fontSize: 12)),
+                      const Icon(Icons.search, color: Color(0xFF00E676), size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          onChanged: (val) => setState(() => _searchQuery = val),
+                          style: const TextStyle(fontSize: 13),
+                          decoration: const InputDecoration(
+                            hintText: 'Search skills, trades, rentals...',
+                            hintStyle: TextStyle(color: Color(0xFF71717A), fontSize: 12),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -381,7 +483,11 @@ class _ExploreFeedState extends State<ExploreFeed> {
               final dist = widget.calcDistance(widget.userLat, widget.userLng, item.lat, item.lng);
               return Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFF15151C), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF272732))),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF15151C),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF272732)),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -403,12 +509,15 @@ class _ExploreFeedState extends State<ExploreFeed> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      height: 28,
-                      decoration: BoxDecoration(color: const Color(0xFF1E1E28), borderRadius: BorderRadius.circular(6)),
-                      alignment: Alignment.center,
-                      child: const Text('Direct Chat', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
+                    GestureDetector(
+                      onTap: () => widget.onOpenChat(item.title),
+                      child: Container(
+                        width: double.infinity,
+                        height: 28,
+                        decoration: BoxDecoration(color: const Color(0xFF1E1E28), borderRadius: BorderRadius.circular(6)),
+                        alignment: Alignment.center,
+                        child: const Text('Direct Chat', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
                     )
                   ],
                 ),
@@ -421,12 +530,13 @@ class _ExploreFeedState extends State<ExploreFeed> {
   }
 }
 
-// ---------------- TAB 2: RADAR MAP SCREEN ----------------
-class MapRadarScreen extends StatelessWidget {
+// ---------------- TAB 2: ANIMATED RADAR SCOPE SCREEN ----------------
+class MapRadarScreen extends StatefulWidget {
   final List<GridItem> items;
   final double userLat;
   final double userLng;
   final Function(double, double, double, double) calcDistance;
+  final Function(GridItem) onSelectNode;
 
   const MapRadarScreen({
     super.key,
@@ -434,33 +544,85 @@ class MapRadarScreen extends StatelessWidget {
     required this.userLat,
     required this.userLng,
     required this.calcDistance,
+    required this.onSelectNode,
   });
+
+  @override
+  State<MapRadarScreen> createState() => _MapRadarScreenState();
+}
+
+class _MapRadarScreenState extends State<MapRadarScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _sweepCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _sweepCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _sweepCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Radar Scope View'), backgroundColor: const Color(0xFF09090C)),
+      appBar: AppBar(title: const Text('Active Radar Scope'), backgroundColor: const Color(0xFF09090C)),
       body: Center(
-        child: Stack(
-          alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 320, height: 320, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.15), width: 2))),
-            Container(width: 220, height: 220, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3), width: 2))),
-            Container(width: 120, height: 120, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.5), width: 2))),
-            const CircleAvatar(radius: 8, backgroundColor: Color(0xFF00E676)),
-            ...items.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final item = entry.value;
-              final offset = (idx + 1) * 35.0;
-              return Positioned(
-                top: 160 + (idx % 2 == 0 ? offset : -offset) * 0.6,
-                left: 160 + (idx % 2 == 1 ? offset : -offset) * 0.7,
-                child: Tooltip(
-                  message: item.title,
-                  child: const CircleAvatar(radius: 6, backgroundColor: Colors.white),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(width: 320, height: 320, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.15), width: 2))),
+                Container(width: 220, height: 220, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3), width: 2))),
+                Container(width: 120, height: 120, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.5), width: 2))),
+                AnimatedBuilder(
+                  animation: _sweepCtrl,
+                  builder: (context, child) {
+                    return Transform.rotate(
+                      angle: _sweepCtrl.value * 2 * pi,
+                      child: Container(
+                        width: 320,
+                        height: 320,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: SweepGradient(
+                            colors: [Colors.transparent, const Color(0xFF00E676).withOpacity(0.3)],
+                            stops: const [0.75, 1.0],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            }).toList(),
+                const CircleAvatar(radius: 8, backgroundColor: Color(0xFF00E676)),
+                ...widget.items.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final item = entry.value;
+                  final offset = (idx + 1) * 35.0;
+                  final top = 160 + (idx % 2 == 0 ? offset : -offset) * 0.6;
+                  final left = 160 + (idx % 2 == 1 ? offset : -offset) * 0.7;
+                  return Positioned(
+                    top: top,
+                    left: left,
+                    child: GestureDetector(
+                      onTap: () => widget.onSelectNode(item),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF00E676)),
+                        child: const Icon(Icons.bolt, size: 14, color: Colors.black),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text('Tap any radar blip to open direct P2P chat', style: TextStyle(color: Colors.grey, fontSize: 12)),
           ],
         ),
       ),
@@ -468,16 +630,121 @@ class MapRadarScreen extends StatelessWidget {
   }
 }
 
-// ---------------- TAB 3: DIRECT CHAT SCREEN ----------------
-class MessagesScreen extends StatelessWidget {
-  const MessagesScreen({super.key});
+// ---------------- TAB 3: CONVERSATION LIST SCREEN ----------------
+class ChatListScreen extends StatelessWidget {
+  final Map<String, List<ChatMessage>> chats;
+  final Function(String) onOpenChat;
+
+  const ChatListScreen({super.key, required this.chats, required this.onOpenChat});
+
+  @override
+  Widget build(BuildContext context) {
+    final keys = chats.keys.toList();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Peer-to-Peer Messages'), backgroundColor: const Color(0xFF09090C)),
+      body: keys.isEmpty
+          ? const Center(child: Text('No active local chats yet.\nConnect directly via listings!', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)))
+          : ListView.separated(
+              padding: const EdgeInsets.all(12),
+              itemCount: keys.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final name = keys[index];
+                final lastMsg = chats[name]!.last;
+                return ListTile(
+                  tileColor: const Color(0xFF15151C),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  leading: const CircleAvatar(backgroundColor: Color(0xFF1E1E28), child: Icon(Icons.person, color: Color(0xFF00E676))),
+                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(lastMsg.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.grey)),
+                  trailing: Text(lastMsg.time, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                  onTap: () => onOpenChat(name),
+                );
+              },
+            ),
+    );
+  }
+}
+
+// ---------------- ACTIVE CHAT SCREEN ----------------
+class ActiveChatScreen extends StatefulWidget {
+  final String providerName;
+  final List<ChatMessage> messages;
+  final Function(String) onSendMessage;
+
+  const ActiveChatScreen({super.key, required this.providerName, required this.messages, required this.onSendMessage});
+
+  @override
+  State<ActiveChatScreen> createState() => _ActiveChatScreenState();
+}
+
+class _ActiveChatScreenState extends State<ActiveChatScreen> {
+  final _textController = TextEditingController();
+
+  void _send() {
+    if (_textController.text.trim().isNotEmpty) {
+      widget.onSendMessage(_textController.text.trim());
+      _textController.clear();
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Peer-to-Peer Messages'), backgroundColor: const Color(0xFF09090C)),
-      body: const Center(
-        child: Text('No active local chats yet.\nConnect directly via listings!', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+      appBar: AppBar(
+        title: Text(widget.providerName),
+        backgroundColor: const Color(0xFF15151C),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.messages.length,
+              itemBuilder: (context, index) {
+                final m = widget.messages[index];
+                return Align(
+                  alignment: m.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: m.isMe ? const Color(0xFF00E676) : const Color(0xFF1E1E28),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(m.text, style: TextStyle(color: m.isMe ? Colors.black : Colors.white)),
+                  ),
+                );
+              },
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            color: const Color(0xFF121218),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: InputDecoration(
+                      hintText: 'Type an encrypted message...',
+                      filled: true,
+                      fillColor: const Color(0xFF1E1E28),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Color(0xFF00E676)),
+                  onPressed: _send,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -498,7 +765,21 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const Center(child: Text('Local Provider Node', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           const SizedBox(height: 24),
-          ListTile(tileColor: const Color(0xFF15151C), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: const Icon(Icons.verified, color: Color(0xFF00E676)), title: const Text('Verification Badge'), subtitle: const Text('Local Phone Verified')),
+          ListTile(
+            tileColor: const Color(0xFF15151C),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            leading: const Icon(Icons.verified, color: Color(0xFF00E676)),
+            title: const Text('Verification Badge'),
+            subtitle: const Text('Local Phone Verified'),
+          ),
+          const SizedBox(height: 12),
+          ListTile(
+            tileColor: const Color(0xFF15151C),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            leading: const Icon(Icons.security, color: Color(0xFF00E676)),
+            title: const Text('Offline Storage Mode'),
+            subtitle: const Text('P2P Local Encryption Enabled'),
+          ),
         ],
       ),
     );
