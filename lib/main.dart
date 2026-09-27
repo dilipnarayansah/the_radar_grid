@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() {
   runApp(const RadarGridApp());
@@ -117,6 +118,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   @override
   void initState() {
     super.initState();
+    _requestLocationPermission();
     _listings = [
       GridListing(
         id: '1',
@@ -243,6 +245,13 @@ class _MainRadarShellState extends State<MainRadarShell> {
     _chats['Rohan Tech Lab'] = [
       ChatMessage(sender: 'Rohan Tech Lab', text: 'Hey neighbor! Need help with your OS or code debugging?', time: '10:45 AM', isMe: false),
     ];
+  }
+
+  Future<void> _requestLocationPermission() async {
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      await Geolocator.requestPermission();
+    }
   }
 
   void _addListing(GridListing listing) {
@@ -548,7 +557,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
           constraints: const BoxConstraints(maxWidth: 440),
           decoration: BoxDecoration(
             color: const Color(0xFF09090D),
-            border: Border.symmetric(vertical: BorderSide(color: const Color(0xFF232330).withOpacity(0.4))),
+            border: Border.symmetric(vertical: BorderSide(color: const Color(0xFF232330).withValues(alpha: 0.4))),
           ),
           child: Scaffold(
             backgroundColor: const Color(0xFF09090D),
@@ -657,9 +666,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text('⚡ Broadcast Signal to Radar Grid', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   CircleAvatar(radius: 4, backgroundColor: Color(0xFF00E676)),
                 ],
@@ -776,28 +785,33 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
         children: [
           // Top Bar with Location, Simple Mode & Active Count
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(
-                onTap: widget.onOpenLocationSelector,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('📍', style: TextStyle(fontSize: 14)),
-                        const SizedBox(width: 4),
-                        Text(widget.activeLocation, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
-                        const SizedBox(width: 4),
-                        const Text('▼', style: TextStyle(fontSize: 10, color: Color(0xFF00E676))),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text('Active Perimeter: ${widget.radarRadius.toStringAsFixed(0)} km (Fuzzy GPS)', style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
-                  ],
+              Expanded(
+                child: GestureDetector(
+                  onTap: widget.onOpenLocationSelector,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('📍', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(widget.activeLocation, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text('▼', style: TextStyle(fontSize: 10, color: Color(0xFF00E676))),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text('Active Perimeter: ${widget.radarRadius.toStringAsFixed(0)} km (Fuzzy GPS)', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(widget.simpleMode ? Icons.view_agenda : Icons.grid_view, color: const Color(0xFF00E676), size: 20),
@@ -809,7 +823,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF0F2417),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF00E676).withOpacity(0.4)),
+                      border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [
@@ -1005,16 +1019,16 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             decoration: BoxDecoration(
               gradient: const LinearGradient(colors: [Color(0xFF10281C), Color(0xFF14141C)]),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3)),
+              border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3)),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const CircleAvatar(radius: 20, backgroundColor: Color(0xFF00E676), child: Text('🌟', style: TextStyle(fontSize: 18))),
-                const SizedBox(width: 12),
+                CircleAvatar(radius: 20, backgroundColor: Color(0xFF00E676), child: Text('🌟', style: TextStyle(fontSize: 18))),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('SPOTLIGHT OF THE WEEK', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
                       SizedBox(height: 2),
                       Text('Rohan fixed 18 student laptops during exams!', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
@@ -1201,9 +1215,11 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
               Text(item.subtitle, style: const TextStyle(color: Color(0xFF71717A), fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 8),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('⚡ ${item.eta}', style: const TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text('⚡ ${item.eta}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 4),
                   Text('${item.distanceKm.toStringAsFixed(1)} km', style: const TextStyle(color: Color(0xFF71717A), fontSize: 10)),
                 ],
               ),
@@ -1267,9 +1283,9 @@ class _MapRadarScreenState extends State<MapRadarScreen> with SingleTickerProvid
             Stack(
               alignment: Alignment.center,
               children: [
-                Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.15), width: 1.5))),
-                Container(width: 200, height: 200, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3), width: 1.5))),
-                Container(width: 100, height: 100, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withOpacity(0.5), width: 1.5))),
+                Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.15), width: 1.5))),
+                Container(width: 200, height: 200, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3), width: 1.5))),
+                Container(width: 100, height: 100, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.5), width: 1.5))),
                 AnimatedBuilder(
                   animation: _sweepCtrl,
                   builder: (context, child) {
@@ -1281,7 +1297,7 @@ class _MapRadarScreenState extends State<MapRadarScreen> with SingleTickerProvid
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: SweepGradient(
-                            colors: [Colors.transparent, const Color(0xFF00E676).withOpacity(0.35)],
+                            colors: [Colors.transparent, const Color(0xFF00E676).withValues(alpha: 0.35)],
                             stops: const [0.75, 1.0],
                           ),
                         ),
@@ -1308,7 +1324,7 @@ class _MapRadarScreenState extends State<MapRadarScreen> with SingleTickerProvid
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
             const SizedBox(height: 24),
@@ -1352,7 +1368,7 @@ class ChatListScreen extends StatelessWidget {
                   onTap: () => onOpenChat(name),
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );
