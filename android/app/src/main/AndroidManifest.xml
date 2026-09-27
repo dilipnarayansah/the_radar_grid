@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
 
     <application
-        android:label="the_radar_grid"
+        android:label="The Radar Grid"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
