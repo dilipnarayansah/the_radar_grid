@@ -5,6 +5,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'firebase_options.dart';
+import 'package:the_radar_grid/models/listing.dart';
+import 'package:the_radar_grid/models/chat.dart';
+import 'package:the_radar_grid/models/user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,134 +35,6 @@ class RadarGridApp extends StatelessWidget {
   }
 }
 
-// ---------------- DATA MODELS ----------------
-enum ListingType { offer, need, bounty, tool }
-
-class GridListing {
-  final String id;
-  final String title;
-  final String subtitle;
-  final String category;
-  final String tag;
-  final String iconEmoji;
-  final double rating;
-  final int reviewsCount;
-  final String eta;
-  final double distanceKm;
-  final String price;
-  final String bio;
-  final String phone;
-  final String sector;
-  final double? latitude;
-  final double? longitude;
-  final ListingType type;
-  final bool isVerified;
-  final String paymentTag;
-  final String statusText;
-  bool isFavorite;
-
-  GridListing({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.category,
-    required this.tag,
-    required this.iconEmoji,
-    required this.rating,
-    required this.reviewsCount,
-    required this.eta,
-    required this.distanceKm,
-    required this.price,
-    required this.bio,
-    required this.phone,
-    required this.sector,
-    this.latitude,
-    this.longitude,
-    this.type = ListingType.offer,
-    this.isVerified = true,
-    this.paymentTag = '📱 UPI / Cash',
-    this.statusText = '🟢 Active Now',
-    this.isFavorite = false,
-  });
-
-  Map<String, dynamic> toMap() => {
-    'title': title,
-    'subtitle': subtitle,
-    'category': category,
-    'tag': tag,
-    'iconEmoji': iconEmoji,
-    'rating': rating,
-    'reviewsCount': reviewsCount,
-    'eta': eta,
-    'distanceKm': distanceKm,
-    'price': price,
-    'bio': bio,
-    'phone': phone,
-    'sector': sector,
-    'latitude': latitude,
-    'longitude': longitude,
-    'type': type.name,
-    'isVerified': isVerified,
-    'paymentTag': paymentTag,
-    'statusText': statusText,
-    'isFavorite': isFavorite,
-  };
-
-  factory GridListing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final typeName = data['type'] as String?;
-
-    return GridListing(
-      id: doc.id,
-      title: data['title'] as String? ?? '',
-      subtitle: data['subtitle'] as String? ?? '',
-      category: data['category'] as String? ?? '',
-      tag: data['tag'] as String? ?? '',
-      iconEmoji: data['iconEmoji'] as String? ?? '',
-      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
-      reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
-      eta: data['eta'] as String? ?? '',
-      distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0.0,
-      price: data['price'] as String? ?? '',
-      bio: data['bio'] as String? ?? '',
-      phone: data['phone'] as String? ?? '',
-      sector: data['sector'] as String? ?? '',
-      latitude: (data['latitude'] as num?)?.toDouble(),
-      longitude: (data['longitude'] as num?)?.toDouble(),
-      type: ListingType.values.firstWhere(
-        (value) => value.name == typeName,
-        orElse: () => ListingType.offer,
-      ),
-      isVerified: data['isVerified'] as bool? ?? true,
-      paymentTag: data['paymentTag'] as String? ?? '📱 UPI / Cash',
-      statusText: data['statusText'] as String? ?? '🟢 Active Now',
-      isFavorite: data['isFavorite'] as bool? ?? false,
-    );
-  }
-}
-
-class ChatMessage {
-  final String sender;
-  final String text;
-  final String time;
-  final bool isMe;
-  final bool isSlotRequest;
-  final bool isUpiRequest;
-  final bool isPinVerified;
-  final String? upiAmount;
-
-  ChatMessage({
-    required this.sender,
-    required this.text,
-    required this.time,
-    required this.isMe,
-    this.isSlotRequest = false,
-    this.isUpiRequest = false,
-    this.isPinVerified = false,
-    this.upiAmount,
-  });
-}
-
 // ---------------- ROOT MOBILE CONTAINER ----------------
 class MainRadarShell extends StatefulWidget {
   const MainRadarShell({super.key});
@@ -177,6 +52,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   bool _lateNightSOS = false;
 
   late List<GridListing> _listings;
+  late UserProfile _currentUser;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _listingsSubscription;
   final Map<String, List<ChatMessage>> _chats = {};
   final Set<String> _bookmarkedIds = {};
@@ -185,6 +61,14 @@ class _MainRadarShellState extends State<MainRadarShell> {
   void initState() {
     super.initState();
     _requestLocationPermission();
+    _currentUser = UserProfile(
+      uid: 'user_123',
+      displayName: 'Guest Neighbor',
+      email: 'guest@radargrid.io',
+      avatarUrl: '',
+      reliabilityRating: 4.9,
+      completedDeals: 12,
+    );
     _listings = [
       GridListing(
         id: '1',
@@ -633,7 +517,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
         chats: _chats,
         onOpenChat: (name) => _openChat(context, name),
       ),
-      ProfileScreen(listingsCount: _listings.length),
+      ProfileScreen(user: _currentUser, listingsCount: _listings.length),
     ];
 
     return Scaffold(
@@ -1282,10 +1166,24 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(color: const Color(0xFF09090D), borderRadius: BorderRadius.circular(6)),
-                child: Text(item.tag, style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(color: const Color(0xFF09090D), borderRadius: BorderRadius.circular(6)),
+                    child: Text(item.tag, style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
+                  ),
+                  if (item.isBoosted)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00E676).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('⚡ BOOSTED', style: TextStyle(color: Color(0xFF00E676), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
+                    ),
+                ],
               ),
               const SizedBox(height: 6),
               Expanded(
@@ -1704,9 +1602,10 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
 
 // ---------------- TAB 4: PROFILE SCREEN ----------------
 class ProfileScreen extends StatelessWidget {
+  final UserProfile user;
   final int listingsCount;
 
-  const ProfileScreen({super.key, required this.listingsCount});
+  const ProfileScreen({super.key, required this.user, required this.listingsCount});
 
   @override
   Widget build(BuildContext context) {
@@ -1714,10 +1613,19 @@ class ProfileScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF14141C), child: Icon(Icons.person, size: 40, color: Color(0xFF00E676))),
+          Center(
+            child: CircleAvatar(
+              radius: 40,
+              backgroundColor: const Color(0xFF14141C),
+              backgroundImage: user.avatarUrl.isNotEmpty ? NetworkImage(user.avatarUrl) : null,
+              child: user.avatarUrl.isEmpty ? const Icon(Icons.person, size: 40, color: Color(0xFF00E676)) : null,
+            ),
+          ),
           const SizedBox(height: 12),
-          const Center(child: Text('Local Community Node', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
+          Center(child: Text(user.displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
           const SizedBox(height: 4),
+          Center(child: Text('Verified Sector 14 Member • ★ ${user.reliabilityRating}', style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+          const SizedBox(height: 8),
           Center(child: Text('$listingsCount Active Listings Synced Across Radar Scope', style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
           const SizedBox(height: 24),
           ListTile(
@@ -1725,7 +1633,7 @@ class ProfileScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             leading: const Icon(Icons.verified_user, color: Color(0xFF00E676)),
             title: const Text('Verified Resident Node', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Fuzzy GPS & 4-Digit Handshake PIN Active', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            subtitle: Text('Handshake PINs Active • ${user.completedDeals} Deals Completed', style: const TextStyle(fontSize: 11, color: Color(0xFF71717A))),
           ),
           const SizedBox(height: 10),
           ListTile(
@@ -1733,7 +1641,7 @@ class ProfileScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             leading: const Icon(Icons.account_balance_wallet, color: Color(0xFF00E676)),
             title: const Text('Side-Income Dashboard', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Earned ₹1,850 helping 6 neighbors this month', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            subtitle: const Text('View your earnings and history', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
           ),
         ],
       ),

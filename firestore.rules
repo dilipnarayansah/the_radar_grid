@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Global: Users can read public listings without auth (to encourage growth)
+    // but MUST be authenticated to write or broadcast.
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || resource.data.authorId == null);
+    }
+
+    // Profiles: Anyone can read profiles (social aspect), only owner can edit.
+    match /profiles/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Chats: Only participants can read/write messages.
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
+      
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds);
+      }
+    }
+    
+    // Support for analytics and status tracking
+    match /system/status {
+      allow read: if true;
+      allow write: if false; // Read-only from client
+    }
+  }
+}
