@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'firebase_options.dart';
 import 'package:the_radar_grid/models/listing.dart';
 import 'package:the_radar_grid/models/chat.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -732,6 +733,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     bool isBoosted = false;
     bool isSaving = false;
     String? modalError;
+    String? pickedImagePath;
 
     showModalBottomSheet(
       context: context,
@@ -850,6 +852,27 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF00E676),
+                  side: const BorderSide(color: Color(0xFF00E676)),
+                  minimumSize: const Size.fromHeight(40),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Icon(Icons.camera_alt, size: 16),
+                label: Text(pickedImagePath != null ? '📷 Photo Attached Successfully' : '📷 Attach Item Photo from Gallery'),
+                onPressed: () async {
+                  try {
+                    final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setModalState(() => pickedImagePath = image.path);
+                    }
+                  } catch (e) {
+                    debugPrint('Image picker error: $e');
+                  }
+                },
+              ),
               if (modalError != null) ...[
                 const SizedBox(height: 8),
                 Text(modalError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -901,6 +924,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           }
 
                           final authorId = widget.currentUser?.uid ?? 'guest_uid';
+                          final imageUrls = pickedImagePath != null
+                              ? [pickedImagePath!, 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500']
+                              : ['https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500'];
 
                           final newListing = GridListing(
                             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -924,7 +950,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                             timestamp: DateTime.now(),
                             authorId: authorId,
                             conditionTag: conditionTag,
-                            imageUrls: ['https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500'],
+                            imageUrls: imageUrls,
                           );
 
                           if (Firebase.apps.isNotEmpty) {
