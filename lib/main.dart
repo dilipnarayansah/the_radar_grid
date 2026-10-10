@@ -226,10 +226,6 @@ class _MainRadarShellState extends State<MainRadarShell> {
     }
   }
 
-  Future<void> _addListing(GridListing listing) {
-    return FirebaseFirestore.instance.collection('listings').add(listing.toMap());
-  }
-
   void _toggleBookmark(String id) {
     setState(() {
       if (_bookmarkedIds.contains(id)) {
@@ -504,7 +500,6 @@ class _MainRadarShellState extends State<MainRadarShell> {
         onToggleNeeds: (val) => setState(() => _showNeedsOnly = val),
         onToggleNightSOS: (val) => setState(() => _lateNightSOS = val),
         onOpenLocationSelector: _openLocationSelector,
-        onAddListing: _addListing,
         onOpenChat: (name) => _openChat(context, name),
         onTapCard: (item) => _showListingDetails(context, item),
       ),
@@ -572,7 +567,6 @@ class ExploreFeedScreen extends StatefulWidget {
   final Function(bool) onToggleNeeds;
   final Function(bool) onToggleNightSOS;
   final VoidCallback onOpenLocationSelector;
-  final Future<void> Function(GridListing) onAddListing;
   final Function(String) onOpenChat;
   final Function(GridListing) onTapCard;
 
@@ -590,7 +584,6 @@ class ExploreFeedScreen extends StatefulWidget {
     required this.onToggleNeeds,
     required this.onToggleNightSOS,
     required this.onOpenLocationSelector,
-    required this.onAddListing,
     required this.onOpenChat,
     required this.onTapCard,
   });
@@ -623,6 +616,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     final subCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
     ListingType selectedType = ListingType.offer;
+    bool isBoosted = false;
 
     showModalBottomSheet(
       context: context,
@@ -692,6 +686,15 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
+              const SizedBox(height: 12),
+              SwitchListTile(
+                title: const Text('⚡ Boost Listing (₹29 Pay-to-Boost)', style: TextStyle(fontSize: 13, color: Colors.white)),
+                subtitle: const Text('Pin to top of neighborhood radar feed', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+                value: isBoosted,
+                activeThumbColor: const Color(0xFF00E676),
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) => setModalState(() => isBoosted = val),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -702,23 +705,41 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 onPressed: () async {
                   if (titleCtrl.text.isNotEmpty) {
                     try {
-                      await widget.onAddListing(GridListing(
-                        id: DateTime.now().toString(),
+                      double? lat;
+                      double? lng;
+                      try {
+                        Position pos = await Geolocator.getCurrentPosition(
+                          desiredAccuracy: LocationAccuracy.high,
+                        );
+                        lat = pos.latitude;
+                        lng = pos.longitude;
+                      } catch (e) {
+                        debugPrint('GPS fetch failed during broadcast: $e');
+                      }
+
+                      final newListing = GridListing(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
                         title: titleCtrl.text,
                         subtitle: subCtrl.text.isEmpty ? 'Available in Local Grid' : subCtrl.text,
                         category: selectedType == ListingType.need ? 'Bounty' : 'Tech & Fix',
-                        tag: selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL',
+                        tag: isBoosted ? '⚡ BOOSTED' : (selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL'),
                         iconEmoji: selectedType == ListingType.need ? '💸' : '⚡',
                         rating: 5.0,
                         reviewsCount: 1,
                         eta: 'Available Now',
-                        distanceKm: 0.2,
+                        distanceKm: 0.1,
                         price: priceCtrl.text.isEmpty ? 'Free' : priceCtrl.text,
-                        bio: 'Newly registered listing broadcast across the neighborhood scope.',
+                        bio: 'Directly broadcast via radar grid node.',
                         phone: '+91 90000 00000',
-                        sector: 'Immediate Sector',
+                        sector: 'Immediate Sector 14',
+                        latitude: lat,
+                        longitude: lng,
                         type: selectedType,
-                      ));
+                        isBoosted: isBoosted,
+                      );
+
+                      await FirebaseFirestore.instance.collection('listings').add(newListing.toMap());
+
                       if (ctx.mounted) Navigator.pop(ctx);
                     } on FirebaseException catch (error, stackTrace) {
                       debugPrint('Failed to add Firestore listing: $error');
