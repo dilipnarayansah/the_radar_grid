@@ -51,11 +51,153 @@ class _MainRadarShellState extends State<MainRadarShell> {
   bool _showNeedsOnly = false;
   bool _lateNightSOS = false;
 
-  late List<GridListing> _listings;
   late UserProfile _currentUser;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _listingsSubscription;
   final Map<String, List<ChatMessage>> _chats = {};
   final Set<String> _bookmarkedIds = {};
+
+  final List<GridListing> _defaultListings = [
+    GridListing(
+      id: '1',
+      title: 'Rohan Tech Lab',
+      subtitle: 'Laptop OS, Linux & Python Fix',
+      category: 'Tech',
+      tag: 'FREE CONSULT',
+      iconEmoji: '💻',
+      rating: 4.9,
+      reviewsCount: 34,
+      eta: '10-15 mins',
+      distanceKm: 0.4,
+      price: '₹150/hr',
+      bio: 'On-spot Linux setup, Windows recovery, and Python bug fixing within the walking block. 50+ students helped.',
+      phone: '+91 98765 43210',
+      sector: 'Walking Block A',
+      type: ListingType.offer,
+      statusText: '🟢 Responding in 2m',
+      latitude: 28.6139,
+      longitude: 77.2090,
+      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+    ),
+    GridListing(
+      id: '2',
+      title: 'Amit Mobile Care',
+      subtitle: 'Screen & Battery Repair',
+      category: 'Repairs',
+      tag: 'SAME DAY FIX',
+      iconEmoji: '📱',
+      rating: 4.8,
+      reviewsCount: 89,
+      eta: '20-25 mins',
+      distanceKm: 0.9,
+      price: 'From ₹200',
+      bio: 'Original display replacements, battery swaps, and water damage recovery done in front of you.',
+      phone: '+91 98111 22334',
+      sector: 'Main Market Block',
+      type: ListingType.offer,
+      latitude: 28.6150,
+      longitude: 77.2100,
+      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+    ),
+    GridListing(
+      id: '3',
+      title: 'Campus Notes & Printout SOS',
+      subtitle: 'Need 15-page color printout',
+      category: 'Bounty',
+      tag: 'BOUNTY ₹80',
+      iconEmoji: '🖨️',
+      rating: 5.0,
+      reviewsCount: 14,
+      eta: 'Urgent',
+      distanceKm: 0.6,
+      price: '₹80 Bounty',
+      bio: 'Need urgent color prints for tomorrow morning submission. Will collect from your hostel/block.',
+      phone: '+91 98999 11223',
+      sector: 'Hostel Block 3',
+      type: ListingType.need,
+      latitude: 28.6120,
+      longitude: 77.2080,
+      timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
+    ),
+    GridListing(
+      id: '4',
+      title: 'Bosch Impact Drill & Kit',
+      subtitle: '1-Day Home Tool Lending',
+      category: 'Tools',
+      tag: 'RENT / BORROW',
+      iconEmoji: '🛠️',
+      rating: 4.9,
+      reviewsCount: 28,
+      eta: 'Available',
+      distanceKm: 1.1,
+      price: '₹50/day',
+      bio: 'Complete drilling kit with wall plugs and bits. Clean condition, pickup from Sector 14 Gate 2.',
+      phone: '+91 97777 88990',
+      sector: 'Pocket C Sector 14',
+      type: ListingType.tool,
+      latitude: 28.6160,
+      longitude: 77.2120,
+      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    GridListing(
+      id: '5',
+      title: 'Priya Bakes',
+      subtitle: 'Custom Cakes & Pastries',
+      category: 'Home Food',
+      tag: 'FRESH BATCH',
+      iconEmoji: '🍰',
+      rating: 5.0,
+      reviewsCount: 42,
+      eta: '30 mins',
+      distanceKm: 1.2,
+      price: '₹80/piece',
+      bio: 'Fresh eggless pastries, tea cakes, and custom party cakes baked with organic ingredients.',
+      phone: '+91 99223 34455',
+      sector: 'Sector 14 Pocket B',
+      type: ListingType.offer,
+      latitude: 28.6110,
+      longitude: 77.2070,
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+    ),
+    GridListing(
+      id: '6',
+      title: 'Vikram 4K Drone & Gimbal',
+      subtitle: 'Sony Cam & Gimbal Kit Loan',
+      category: 'Tools',
+      tag: 'CITY RING',
+      iconEmoji: '📷',
+      rating: 4.9,
+      reviewsCount: 57,
+      eta: '15 min drive',
+      distanceKm: 6.4,
+      price: '₹500/day',
+      bio: 'Rent verified camera rigs, wireless mics, and travel gimbals across the city perimeter.',
+      phone: '+91 96555 44332',
+      sector: 'Tech Hub Sector 62',
+      type: ListingType.tool,
+      latitude: 28.6300,
+      longitude: 77.2300,
+      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+    ),
+    GridListing(
+      id: '7',
+      title: 'Cyber Hub Carpool',
+      subtitle: '2 Seats Free • Mon-Fri 8:30 AM',
+      category: 'Vehicles',
+      tag: 'CARPOOL',
+      iconEmoji: '🚗',
+      rating: 5.0,
+      reviewsCount: 22,
+      eta: 'Daily',
+      distanceKm: 8.5,
+      price: '₹120/seat',
+      bio: 'Comfortable AC sedan ride share for office goers traveling toward Cyber Hub.',
+      phone: '+91 95444 33221',
+      sector: 'Expressway Corridor',
+      type: ListingType.offer,
+      latitude: 28.5000,
+      longitude: 77.0800,
+      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
+    ),
+  ];
 
   @override
   void initState() {
@@ -69,154 +211,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
       reliabilityRating: 4.9,
       completedDeals: 12,
     );
-    _listings = [
-      GridListing(
-        id: '1',
-        title: 'Rohan Tech Lab',
-        subtitle: 'Laptop OS, Linux & Python Fix',
-        category: 'Tech & Fix',
-        tag: 'FREE CONSULT',
-        iconEmoji: '💻',
-        rating: 4.9,
-        reviewsCount: 34,
-        eta: '10-15 mins',
-        distanceKm: 0.4,
-        price: '₹150/hr',
-        bio: 'On-spot Linux setup, Windows recovery, and Python bug fixing within the walking block. 50+ students helped.',
-        phone: '+91 98765 43210',
-        sector: 'Walking Block A',
-        type: ListingType.offer,
-        statusText: '🟢 Responding in 2m',
-      ),
-      GridListing(
-        id: '2',
-        title: 'Amit Mobile Care',
-        subtitle: 'Screen & Battery Repair',
-        category: 'Repairs',
-        tag: 'SAME DAY FIX',
-        iconEmoji: '📱',
-        rating: 4.8,
-        reviewsCount: 89,
-        eta: '20-25 mins',
-        distanceKm: 0.9,
-        price: 'From ₹200',
-        bio: 'Original display replacements, battery swaps, and water damage recovery done in front of you.',
-        phone: '+91 98111 22334',
-        sector: 'Main Market Block',
-        type: ListingType.offer,
-      ),
-      GridListing(
-        id: '3',
-        title: 'Campus Notes & Printout SOS',
-        subtitle: 'Need 15-page color printout',
-        category: 'Bounty',
-        tag: 'BOUNTY ₹80',
-        iconEmoji: '🖨️',
-        rating: 5.0,
-        reviewsCount: 14,
-        eta: 'Urgent',
-        distanceKm: 0.6,
-        price: '₹80 Bounty',
-        bio: 'Need urgent color prints for tomorrow morning submission. Will collect from your hostel/block.',
-        phone: '+91 98999 11223',
-        sector: 'Hostel Block 3',
-        type: ListingType.need,
-      ),
-      GridListing(
-        id: '4',
-        title: 'Bosch Impact Drill & Kit',
-        subtitle: '1-Day Home Tool Lending',
-        category: 'Tool Depot',
-        tag: 'RENT / BORROW',
-        iconEmoji: '🛠️',
-        rating: 4.9,
-        reviewsCount: 28,
-        eta: 'Available',
-        distanceKm: 1.1,
-        price: '₹50/day',
-        bio: 'Complete drilling kit with wall plugs and bits. Clean condition, pickup from Sector 14 Gate 2.',
-        phone: '+91 97777 88990',
-        sector: 'Pocket C Sector 14',
-        type: ListingType.tool,
-      ),
-      GridListing(
-        id: '5',
-        title: 'Priya Bakes',
-        subtitle: 'Custom Cakes & Pastries',
-        category: 'Home Food',
-        tag: 'FRESH BATCH',
-        iconEmoji: '🍰',
-        rating: 5.0,
-        reviewsCount: 42,
-        eta: '30 mins',
-        distanceKm: 1.2,
-        price: '₹80/piece',
-        bio: 'Fresh eggless pastries, tea cakes, and custom party cakes baked with organic ingredients.',
-        phone: '+91 99223 34455',
-        sector: 'Sector 14 Pocket B',
-        type: ListingType.offer,
-      ),
-      GridListing(
-        id: '6',
-        title: 'Vikram 4K Drone & Gimbal',
-        subtitle: 'Sony Cam & Gimbal Kit Loan',
-        category: 'Tool Depot',
-        tag: 'CITY RING',
-        iconEmoji: '📷',
-        rating: 4.9,
-        reviewsCount: 57,
-        eta: '15 min drive',
-        distanceKm: 6.4,
-        price: '₹500/day',
-        bio: 'Rent verified camera rigs, wireless mics, and travel gimbals across the city perimeter.',
-        phone: '+91 96555 44332',
-        sector: 'Tech Hub Sector 62',
-        type: ListingType.tool,
-      ),
-      GridListing(
-        id: '7',
-        title: 'Cyber Hub Carpool',
-        subtitle: '2 Seats Free • Mon-Fri 8:30 AM',
-        category: 'Tech & Fix',
-        tag: 'CARPOOL',
-        iconEmoji: '🚗',
-        rating: 5.0,
-        reviewsCount: 22,
-        eta: 'Daily',
-        distanceKm: 8.5,
-        price: '₹120/seat',
-        bio: 'Comfortable AC sedan ride share for office goers traveling toward Cyber Hub.',
-        phone: '+91 95444 33221',
-        sector: 'Expressway Corridor',
-        type: ListingType.offer,
-      ),
-    ];
-
     _chats['Rohan Tech Lab'] = [
       ChatMessage(sender: 'Rohan Tech Lab', text: 'Hey neighbor! Need help with your OS or code debugging?', time: '10:45 AM', isMe: false),
     ];
-
-    _listingsSubscription = FirebaseFirestore.instance
-        .collection('listings')
-        .snapshots()
-        .listen(
-          (snapshot) {
-            if (!mounted) return;
-            setState(() {
-              _listings = snapshot.docs.map(GridListing.fromFirestore).toList();
-            });
-          },
-          onError: (Object error, StackTrace stackTrace) {
-            debugPrint('Failed to listen to Firestore listings: $error');
-            debugPrintStack(stackTrace: stackTrace);
-          },
-        );
-  }
-
-  @override
-  void dispose() {
-    _listingsSubscription?.cancel();
-    super.dispose();
   }
 
   Future<void> _requestLocationPermission() async {
@@ -356,7 +353,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Expanded(
+                              child: Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ),
                             GestureDetector(
                               onTap: () {
                                 _toggleBookmark(item.id);
@@ -371,7 +370,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
                           ],
                         ),
                         const SizedBox(height: 3),
-                        Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
+                        Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -417,6 +416,36 @@ class _MainRadarShellState extends State<MainRadarShell> {
               const SizedBox(height: 6),
               Text(item.bio, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4)),
               const SizedBox(height: 14),
+              // GPS Coordinates & Timestamp Details Card
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('📍 CAPTURED GPS & METADATA', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          item.latitude != null && item.longitude != null
+                              ? 'Lat: ${item.latitude!.toStringAsFixed(4)}, Lng: ${item.longitude!.toStringAsFixed(4)}'
+                              : 'Sector 14 (Fuzzy Offset Active)',
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                        Text(
+                          item.timestamp != null
+                              ? '${item.timestamp!.hour.toString().padLeft(2, '0')}:${item.timestamp!.minute.toString().padLeft(2, '0')} (${item.distanceKm.toStringAsFixed(1)} km)'
+                              : '${item.distanceKm.toStringAsFixed(1)} km away',
+                          style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -458,9 +487,12 @@ class _MainRadarShellState extends State<MainRadarShell> {
                     width: 48,
                     decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2B2B3C))),
                     child: IconButton(
-                      icon: const Icon(Icons.call, color: Color(0xFF00E676), size: 20),
+                      icon: const Icon(Icons.share, color: Color(0xFF00E676), size: 20),
+                      tooltip: 'Share Listing',
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Dialing ${item.title} (${item.phone})...')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Copied link for ${item.title} to clipboard!')),
+                        );
                       },
                     ),
                   ),
@@ -472,7 +504,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
                         Navigator.pop(ctx);
                         _openChat(context, item.title);
                       },
-                      child: const Text('Open Direct Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: const Text('Contact Seller / Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
                 ],
@@ -486,69 +518,84 @@ class _MainRadarShellState extends State<MainRadarShell> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      ExploreFeedScreen(
-        listings: _listings,
-        activeLocation: _activeLocationName,
-        radarRadius: _radarRadius,
-        simpleMode: _simpleMode,
-        showNeedsOnly: _showNeedsOnly,
-        lateNightSOS: _lateNightSOS,
-        bookmarkedIds: _bookmarkedIds,
-        onRadiusChanged: (r) => setState(() => _radarRadius = r),
-        onToggleSimpleMode: () => setState(() => _simpleMode = !_simpleMode),
-        onToggleNeeds: (val) => setState(() => _showNeedsOnly = val),
-        onToggleNightSOS: (val) => setState(() => _lateNightSOS = val),
-        onOpenLocationSelector: _openLocationSelector,
-        onOpenChat: (name) => _openChat(context, name),
-        onTapCard: (item) => _showListingDetails(context, item),
-      ),
-      MapRadarScreen(
-        listings: _listings,
-        radarRadius: _radarRadius,
-        onSelectListing: (listing) => _showListingDetails(context, listing),
-      ),
-      ChatListScreen(
-        chats: _chats,
-        onOpenChat: (name) => _openChat(context, name),
-      ),
-      ProfileScreen(user: _currentUser, listingsCount: _listings.length),
-    ];
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: Firebase.apps.isNotEmpty
+          ? FirebaseFirestore.instance.collection('listings').orderBy('timestamp', descending: true).snapshots()
+          : const Stream.empty(),
+      builder: (context, snapshot) {
+        List<GridListing> listings = [];
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          listings = snapshot.data!.docs.map(GridListing.fromFirestore).toList();
+        } else {
+          // Fallback to default mock listings if Firestore is empty or loading
+          listings = _defaultListings;
+        }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 440),
-          decoration: BoxDecoration(
-            color: const Color(0xFF09090D),
-            border: Border.symmetric(vertical: BorderSide(color: const Color(0xFF232330).withValues(alpha: 0.4))),
+        final screens = [
+          ExploreFeedScreen(
+            listings: listings,
+            activeLocation: _activeLocationName,
+            radarRadius: _radarRadius,
+            simpleMode: _simpleMode,
+            showNeedsOnly: _showNeedsOnly,
+            lateNightSOS: _lateNightSOS,
+            bookmarkedIds: _bookmarkedIds,
+            onRadiusChanged: (r) => setState(() => _radarRadius = r),
+            onToggleSimpleMode: () => setState(() => _simpleMode = !_simpleMode),
+            onToggleNeeds: (val) => setState(() => _showNeedsOnly = val),
+            onToggleNightSOS: (val) => setState(() => _lateNightSOS = val),
+            onOpenLocationSelector: _openLocationSelector,
+            onOpenChat: (name) => _openChat(context, name),
+            onTapCard: (item) => _showListingDetails(context, item),
           ),
-          child: Scaffold(
-            backgroundColor: const Color(0xFF09090D),
-            body: screens[_currentIndex],
-            bottomNavigationBar: Container(
-              decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF1B1B26), width: 1))),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (idx) => setState(() => _currentIndex = idx),
-                backgroundColor: const Color(0xFF0D0D12),
-                selectedItemColor: const Color(0xFF00E676),
-                unselectedItemColor: const Color(0xFF71717A),
-                type: BottomNavigationBarType.fixed,
-                selectedFontSize: 11,
-                unselectedFontSize: 11,
-                items: const [
-                  BottomNavigationBarItem(icon: Icon(Icons.bolt), label: 'Explore'),
-                  BottomNavigationBarItem(icon: Icon(Icons.radar), label: 'Radar Map'),
-                  BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
-                  BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
-                ],
+          MapRadarScreen(
+            listings: listings,
+            radarRadius: _radarRadius,
+            onSelectListing: (listing) => _showListingDetails(context, listing),
+          ),
+          ChatListScreen(
+            chats: _chats,
+            onOpenChat: (name) => _openChat(context, name),
+          ),
+          ProfileScreen(user: _currentUser, listingsCount: listings.length),
+        ];
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              decoration: BoxDecoration(
+                color: const Color(0xFF09090D),
+                border: Border.symmetric(vertical: BorderSide(color: const Color(0xFF232330).withValues(alpha: 0.4))),
+              ),
+              child: Scaffold(
+                backgroundColor: const Color(0xFF09090D),
+                body: screens[_currentIndex],
+                bottomNavigationBar: Container(
+                  decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF1B1B26), width: 1))),
+                  child: BottomNavigationBar(
+                    currentIndex: _currentIndex,
+                    onTap: (idx) => setState(() => _currentIndex = idx),
+                    backgroundColor: const Color(0xFF0D0D12),
+                    selectedItemColor: const Color(0xFF00E676),
+                    unselectedItemColor: const Color(0xFF71717A),
+                    type: BottomNavigationBarType.fixed,
+                    selectedFontSize: 11,
+                    unselectedFontSize: 11,
+                    items: const [
+                      BottomNavigationBarItem(icon: Icon(Icons.bolt), label: 'Explore'),
+                      BottomNavigationBarItem(icon: Icon(Icons.radar), label: 'Radar Map'),
+                      BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
+                      BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -598,9 +645,11 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
   final List<Map<String, String>> categories = [
     {'name': 'All', 'emoji': '⚡'},
-    {'name': 'Tech & Fix', 'emoji': '💻'},
+    {'name': 'Tech', 'emoji': '💻'},
+    {'name': 'Tools', 'emoji': '🛠️'},
+    {'name': 'Vehicles', 'emoji': '🚗'},
+    {'name': 'Services', 'emoji': '🔧'},
     {'name': 'Bounty', 'emoji': '💸'},
-    {'name': 'Tool Depot', 'emoji': '🛠️'},
     {'name': 'Home Food', 'emoji': '🍲'},
     {'name': 'Repairs', 'emoji': '📱'},
   ];
@@ -616,7 +665,10 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     final subCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
     ListingType selectedType = ListingType.offer;
+    String selectedCat = 'Tech';
     bool isBoosted = false;
+    bool isSaving = false;
+    String? errorMessage;
 
     showModalBottomSheet(
       context: context,
@@ -649,16 +701,40 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   ChoiceChip(
                     label: const Text('Community Need / Bounty', style: TextStyle(fontSize: 11)),
                     selected: selectedType == ListingType.need,
-                    onSelected: (val) => setModalState(() => selectedType = ListingType.need),
+                    onSelected: (val) {
+                      setModalState(() {
+                        selectedType = ListingType.need;
+                        selectedCat = 'Bounty';
+                      });
+                    },
                   ),
                 ],
               ),
               const SizedBox(height: 12),
+              // Category Dropdown Selection
+              DropdownButtonFormField<String>(
+                initialValue: selectedCat,
+                dropdownColor: const Color(0xFF1B1B26),
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  filled: true,
+                  fillColor: const Color(0xFF1B1B26),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+                items: ['Tech', 'Tools', 'Vehicles', 'Services', 'Bounty', 'Home Food', 'Repairs']
+                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) setModalState(() => selectedCat = val);
+                },
+              ),
+              const SizedBox(height: 10),
               TextField(
                 controller: titleCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Title (e.g. Spare 65W Charger, Python Tutor)',
+                  labelText: 'Title * (e.g. Spare 65W Charger)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -678,14 +754,19 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               const SizedBox(height: 10),
               TextField(
                 controller: priceCtrl,
+                keyboardType: TextInputType.text,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Price / Bounty (e.g. ₹100, Free, Mutual)',
+                  labelText: 'Price / Bounty * (e.g. ₹100, Free)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
               const SizedBox(height: 12),
               SwitchListTile(
                 title: const Text('⚡ Boost Listing (₹29 Pay-to-Boost)', style: TextStyle(fontSize: 13, color: Colors.white)),
@@ -702,57 +783,84 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () async {
-                  if (titleCtrl.text.isNotEmpty) {
-                    try {
-                      double? lat;
-                      double? lng;
-                      try {
-                        Position pos = await Geolocator.getCurrentPosition(
-                          desiredAccuracy: LocationAccuracy.high,
-                        );
-                        lat = pos.latitude;
-                        lng = pos.longitude;
-                      } catch (e) {
-                        debugPrint('GPS fetch failed during broadcast: $e');
-                      }
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        // Strict Validation
+                        if (titleCtrl.text.trim().isEmpty) {
+                          setModalState(() => errorMessage = 'Please enter a valid title.');
+                          return;
+                        }
+                        if (priceCtrl.text.trim().isEmpty) {
+                          setModalState(() => errorMessage = 'Please enter a valid price or bounty.');
+                          return;
+                        }
 
-                      final newListing = GridListing(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: titleCtrl.text,
-                        subtitle: subCtrl.text.isEmpty ? 'Available in Local Grid' : subCtrl.text,
-                        category: selectedType == ListingType.need ? 'Bounty' : 'Tech & Fix',
-                        tag: isBoosted ? '⚡ BOOSTED' : (selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL'),
-                        iconEmoji: selectedType == ListingType.need ? '💸' : '⚡',
-                        rating: 5.0,
-                        reviewsCount: 1,
-                        eta: 'Available Now',
-                        distanceKm: 0.1,
-                        price: priceCtrl.text.isEmpty ? 'Free' : priceCtrl.text,
-                        bio: 'Directly broadcast via radar grid node.',
-                        phone: '+91 90000 00000',
-                        sector: 'Immediate Sector 14',
-                        latitude: lat,
-                        longitude: lng,
-                        type: selectedType,
-                        isBoosted: isBoosted,
-                      );
+                        setModalState(() {
+                          isSaving = true;
+                          errorMessage = null;
+                        });
 
-                      await FirebaseFirestore.instance.collection('listings').add(newListing.toMap());
+                        try {
+                          double? lat;
+                          double? lng;
+                          try {
+                            Position pos = await Geolocator.getCurrentPosition(
+                              desiredAccuracy: LocationAccuracy.high,
+                            );
+                            lat = pos.latitude;
+                            lng = pos.longitude;
+                          } catch (e) {
+                            debugPrint('GPS fetch failed during broadcast: $e');
+                          }
 
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    } on FirebaseException catch (error, stackTrace) {
-                      debugPrint('Failed to add Firestore listing: $error');
-                      debugPrintStack(stackTrace: stackTrace);
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Could not post listing: ${error.message ?? error.code}')),
-                        );
-                      }
-                    }
-                  }
-                },
-                child: const Text('Post Signal to Grid', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                          final newListing = GridListing(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            title: titleCtrl.text.trim(),
+                            subtitle: subCtrl.text.trim().isEmpty ? 'Available in Local Grid' : subCtrl.text.trim(),
+                            category: selectedCat,
+                            tag: isBoosted ? '⚡ BOOSTED' : (selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL'),
+                            iconEmoji: selectedCat == 'Bounty' ? '💸' : (selectedCat == 'Tools' ? '🛠️' : (selectedCat == 'Vehicles' ? '🚗' : '⚡')),
+                            rating: 5.0,
+                            reviewsCount: 1,
+                            eta: 'Available Now',
+                            distanceKm: 0.1,
+                            price: priceCtrl.text.trim(),
+                            bio: 'Directly broadcast via verified radar grid node.',
+                            phone: '+91 90000 00000',
+                            sector: 'Immediate Sector 14',
+                            latitude: lat,
+                            longitude: lng,
+                            type: selectedType,
+                            isBoosted: isBoosted,
+                            timestamp: DateTime.now(),
+                          );
+
+                          await FirebaseFirestore.instance.collection('listings').add(newListing.toMap());
+
+                          if (ctx.mounted) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('⚡ Signal broadcast successfully to radar grid!')),
+                            );
+                          }
+                        } on FirebaseException catch (error, stackTrace) {
+                          debugPrint('Failed to add Firestore listing: $error');
+                          debugPrintStack(stackTrace: stackTrace);
+                          setModalState(() {
+                            isSaving = false;
+                            errorMessage = 'Firestore error: ${error.message ?? error.code}';
+                          });
+                        } catch (e) {
+                          setModalState(() {
+                            isSaving = false;
+                            errorMessage = 'Error: $e';
+                          });
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                    : const Text('Post Signal to Grid', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
@@ -763,8 +871,12 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final activeCatName = categories[_selectedCat]['name'];
+
     final withinRange = widget.listings.where((item) {
-      final matchesCategory = _selectedCat == 0 || item.category == categories[_selectedCat]['name'];
+      final matchesCategory = _selectedCat == 0 ||
+          item.category.toLowerCase() == activeCatName!.toLowerCase() ||
+          item.category.toLowerCase().contains(activeCatName.toLowerCase());
       final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchesRange = item.distanceKm <= widget.radarRadius;
@@ -773,7 +885,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     }).toList();
 
     final outsideRange = widget.listings.where((item) {
-      final matchesCategory = _selectedCat == 0 || item.category == categories[_selectedCat]['name'];
+      final matchesCategory = _selectedCat == 0 ||
+          item.category.toLowerCase() == activeCatName!.toLowerCase() ||
+          item.category.toLowerCase().contains(activeCatName.toLowerCase());
       final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
       final isOutside = item.distanceKm > widget.radarRadius;
@@ -972,7 +1086,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Categories Bar
+          // Interactive Marketplace Categories Bar (All, Tech, Tools, Vehicles, Services...)
           SizedBox(
             height: 78,
             child: ListView.separated(
@@ -1050,16 +1164,29 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
           if (withinRange.isEmpty)
             Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
               child: Column(
                 children: [
-                  const Text('No direct nodes found within this radius.', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
-                    onPressed: () => widget.onRadiusChanged(15.0),
-                    child: const Text('Expand Radar Scope to City (15 km)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                  const Text('📭 No listings in this category yet', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  const Text('Be the first neighbor to post a listing or expand your radar scope.', style: TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+                        onPressed: _openBroadcastModal,
+                        child: const Text('Post Listing Now', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF00E676))),
+                        onPressed: () => widget.onRadiusChanged(15.0),
+                        child: const Text('Expand to 15 km', style: TextStyle(color: Color(0xFF00E676), fontSize: 12)),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1122,10 +1249,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             const SizedBox(height: 12),
             ...outsideRange.map((item) => Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
               child: ListTile(
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 leading: Container(
                   width: 44,
                   height: 44,

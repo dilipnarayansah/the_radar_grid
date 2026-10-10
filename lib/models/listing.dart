@@ -25,6 +25,7 @@ class GridListing {
   final String statusText;
   final String? authorId; // Security: Link to owner
   final bool isBoosted;   // Feature: ₹29 pay-to-boost
+  final DateTime? timestamp;
   bool isFavorite;
 
   GridListing({
@@ -51,6 +52,7 @@ class GridListing {
     this.isFavorite = false,
     this.authorId,
     this.isBoosted = false,
+    this.timestamp,
   });
 
   Map<String, dynamic> toMap() => {
@@ -76,11 +78,20 @@ class GridListing {
     'isFavorite': isFavorite,
     'authorId': authorId,
     'isBoosted': isBoosted,
+    'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
   };
 
   factory GridListing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     final typeName = data['type'] as String?;
+
+    DateTime? parsedTimestamp;
+    final tsData = data['timestamp'];
+    if (tsData is Timestamp) {
+      parsedTimestamp = tsData.toDate();
+    } else if (tsData is String) {
+      parsedTimestamp = DateTime.tryParse(tsData);
+    }
 
     return GridListing(
       id: doc.id,
@@ -109,6 +120,7 @@ class GridListing {
       isFavorite: data['isFavorite'] as bool? ?? false,
       authorId: data['authorId'] as String?,
       isBoosted: data['isBoosted'] as bool? ?? false,
+      timestamp: parsedTimestamp,
     );
   }
 }
