@@ -21,6 +21,6 @@ void main() {
     await tester.tap(find.text('Radar Map'));
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byType(MapRadarScreen), findsOneWidget);
+    expect(find.byType(MapRadarView), findsOneWidget);
   });
 }

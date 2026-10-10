@@ -9,6 +9,9 @@ import 'firebase_options.dart';
 import 'package:the_radar_grid/models/listing.dart';
 import 'package:the_radar_grid/models/chat.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:the_radar_grid/services/media_service.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +25,7 @@ class RadarGridApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'The Radar Grid - Enterprise',
+      title: 'The Radar Grid - Wave 3 Enterprise',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF09090D),
@@ -81,6 +84,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
       authorId: 'rohan_123',
       conditionTag: 'Refurbished',
+      isVerified: true,
       imageUrls: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500'],
     ),
     GridListing(
@@ -104,6 +108,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
       authorId: 'amit_456',
       conditionTag: 'New',
+      isVerified: true,
       imageUrls: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500'],
     ),
     GridListing(
@@ -127,6 +132,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
       authorId: 'student_789',
       conditionTag: 'Used',
+      isVerified: false,
     ),
     GridListing(
       id: '4',
@@ -149,6 +155,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       timestamp: DateTime.now().subtract(const Duration(hours: 1)),
       authorId: 'tool_depot',
       conditionTag: 'Used',
+      isVerified: true,
       imageUrls: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500'],
     ),
     GridListing(
@@ -172,50 +179,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
       authorId: 'priya_bakes',
       conditionTag: 'New',
-    ),
-    GridListing(
-      id: '6',
-      title: 'Vikram 4K Drone & Gimbal',
-      subtitle: 'Sony Cam & Gimbal Kit Loan',
-      category: 'Tools',
-      tag: 'CITY RING',
-      iconEmoji: '📷',
-      rating: 4.9,
-      reviewsCount: 57,
-      eta: '15 min drive',
-      distanceKm: 6.4,
-      price: '₹500/day',
-      bio: 'Rent verified camera rigs, wireless mics, and travel gimbals across the city perimeter.',
-      phone: '+91 96555 44332',
-      sector: 'Tech Hub Sector 62',
-      type: ListingType.tool,
-      latitude: 28.6300,
-      longitude: 77.2300,
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      authorId: 'vikram_cam',
-      conditionTag: 'Refurbished',
-    ),
-    GridListing(
-      id: '7',
-      title: 'Cyber Hub Carpool',
-      subtitle: '2 Seats Free • Mon-Fri 8:30 AM',
-      category: 'Vehicles',
-      tag: 'CARPOOL',
-      iconEmoji: '🚗',
-      rating: 5.0,
-      reviewsCount: 22,
-      eta: 'Daily',
-      distanceKm: 8.5,
-      price: '₹120/seat',
-      bio: 'Comfortable AC sedan ride share for office goers traveling toward Cyber Hub.',
-      phone: '+91 95444 33221',
-      sector: 'Expressway Corridor',
-      type: ListingType.offer,
-      latitude: 28.5000,
-      longitude: 77.0800,
-      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
-      authorId: 'carpool_guy',
-      conditionTag: 'New',
+      isVerified: true,
     ),
   ];
 
@@ -231,7 +195,6 @@ class _MainRadarShellState extends State<MainRadarShell> {
       if (Firebase.apps.isNotEmpty) {
         _firebaseUser = FirebaseAuth.instance.currentUser;
         if (_firebaseUser == null) {
-          // Auto sign in anonymously for seamless guest experience
           UserCredential cred = await FirebaseAuth.instance.signInAnonymously();
           _firebaseUser = cred.user;
         }
@@ -280,7 +243,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF14141C),
         title: const Text('🚨 Report Listing', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-        content: const Text('Select reason for reporting this neighborhood node:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+        content: const Text('Select reason for reporting this commercial node:', style: TextStyle(color: Colors.white70, fontSize: 13)),
         actions: [
           TextButton(
             onPressed: () {
@@ -427,7 +390,15 @@ class _MainRadarShellState extends State<MainRadarShell> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              child: Row(
+                                children: [
+                                  Flexible(child: Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                  if (item.isVerified) ...[
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.verified, color: Color(0xFF00E676), size: 16),
+                                  ],
+                                ],
+                              ),
                             ),
                             PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert, color: Color(0xFF71717A), size: 20),
@@ -492,18 +463,18 @@ class _MainRadarShellState extends State<MainRadarShell> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('ABOUT NEIGHBORHOOD SERVICE', style: TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+              const Text('ABOUT COMMERCIAL NODE', style: TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
               const SizedBox(height: 6),
               Text(item.bio, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4)),
               const SizedBox(height: 14),
-              // GPS Coordinates & Timestamp Details Card
+              // GPS Coordinates & Distance Indicator
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('📍 CAPTURED GPS & METADATA', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
+                    const Text('📍 SPATIAL PROXIMITY & METADATA', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -515,9 +486,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
                           style: const TextStyle(color: Colors.white70, fontSize: 11),
                         ),
                         Text(
-                          item.timestamp != null
-                              ? '${item.timestamp!.hour.toString().padLeft(2, '0')}:${item.timestamp!.minute.toString().padLeft(2, '0')} (${item.distanceKm.toStringAsFixed(1)} km)'
-                              : '${item.distanceKm.toStringAsFixed(1)} km away',
+                          '${item.distanceKm.toStringAsFixed(1)} km away',
                           style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w600),
                         ),
                       ],
@@ -581,8 +550,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
           _errorMessage = 'Network sync warning: displaying local cache.';
         }
 
-        // Filter out blocked users
-        listings = listings.where((l) => !(_blockedUserIds.contains(l.authorId))).toList();
+        // Filter out blocked users & prune out-of-bounds listings dynamically
+        listings = listings.where((l) => !(_blockedUserIds.contains(l.authorId)) && l.distanceKm <= _radarRadius).toList();
 
         final screens = [
           ExploreFeedScreen(
@@ -603,7 +572,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
             onOpenChat: (name) => _openChat(context, name),
             onTapCard: (item) => _showListingDetails(context, item),
           ),
-          MapRadarScreen(
+          MapRadarView(
             listings: listings,
             radarRadius: _radarRadius,
             onSelectListing: (listing) => _showListingDetails(context, listing),
@@ -659,7 +628,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   }
 }
 
-// ---------------- TAB 1: EXPLORE FEED WITH ADVANCED SPATIAL & PRICE FILTERS ----------------
+// ---------------- TAB 1: EXPLORE FEED ----------------
 class ExploreFeedScreen extends StatefulWidget {
   final List<GridListing> listings;
   final String activeLocation;
@@ -730,6 +699,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     ListingType selectedType = ListingType.offer;
     String selectedCat = 'Tech';
     String conditionTag = 'Used';
+    bool isVerified = true;
     bool isBoosted = false;
     bool isSaving = false;
     String? modalError;
@@ -750,7 +720,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('⚡ Broadcast Commercial Signal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text('⚡ Broadcast Enterprise Listing', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   CircleAvatar(radius: 4, backgroundColor: Color(0xFF00E676)),
                 ],
               ),
@@ -860,16 +830,22 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   minimumSize: const Size.fromHeight(40),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                icon: const Icon(Icons.camera_alt, size: 16),
-                label: Text(pickedImagePath != null ? '📷 Photo Attached Successfully' : '📷 Attach Item Photo from Gallery'),
+                icon: const Icon(Icons.cloud_upload, size: 16),
+                label: Text(pickedImagePath != null ? '✅ Image Uploaded via Cloudinary CDN' : '☁️ Upload Photo to Free Cloudinary CDN'),
                 onPressed: () async {
                   try {
                     final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
                     if (image != null) {
-                      setModalState(() => pickedImagePath = image.path);
+                      setModalState(() => isSaving = true);
+                      final secureUrl = await MediaService.uploadImage(image.path);
+                      setModalState(() {
+                        pickedImagePath = secureUrl;
+                        isSaving = false;
+                      });
                     }
                   } catch (e) {
-                    debugPrint('Image picker error: $e');
+                    debugPrint('Media upload error: $e');
+                    setModalState(() => isSaving = false);
                   }
                 },
               ),
@@ -878,6 +854,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 Text(modalError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
               const SizedBox(height: 12),
+              SwitchListTile(
+                title: const Text('🛡️ Verified Commercial Badge', style: TextStyle(fontSize: 13, color: Colors.white)),
+                subtitle: const Text('Display blue verified checkmark', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+                value: isVerified,
+                activeThumbColor: const Color(0xFF00E676),
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) => setModalState(() => isVerified = val),
+              ),
               SwitchListTile(
                 title: const Text('⚡ Boost Listing (₹29 Pay-to-Boost)', style: TextStyle(fontSize: 13, color: Colors.white)),
                 subtitle: const Text('Pin to top of neighborhood radar feed', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
@@ -950,6 +934,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                             timestamp: DateTime.now(),
                             authorId: authorId,
                             conditionTag: conditionTag,
+                            isVerified: isVerified,
                             imageUrls: imageUrls,
                           );
 
@@ -960,7 +945,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚡ Commercial listing broadcast successfully!')),
+                              const SnackBar(content: Text('⚡ Commercial listing broadcast successfully via Cloudinary CDN!')),
                             );
                           }
                         } catch (e) {
@@ -992,27 +977,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           item.category.toLowerCase().contains(activeCatName.toLowerCase());
       final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesRange = item.distanceKm <= widget.radarRadius;
       final matchesType = widget.showNeedsOnly ? (item.type == ListingType.need) : true;
-      return matchesCategory && matchesSearch && matchesRange && matchesType;
-    }).toList();
-
-    final outsideRange = widget.listings.where((item) {
-      if (item.isSold) return false;
-      final matchesCategory = _selectedCat == 0 ||
-          item.category.toLowerCase() == activeCatName!.toLowerCase() ||
-          item.category.toLowerCase().contains(activeCatName.toLowerCase());
-      final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
-      final isOutside = item.distanceKm > widget.radarRadius;
-      return matchesCategory && matchesSearch && isOutside;
+      return matchesCategory && matchesSearch && matchesType;
     }).toList();
 
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         children: [
-          // Defensive Error Banner if any
           if (widget.errorMessage != null) ...[
             Container(
               padding: const EdgeInsets.all(10),
@@ -1289,8 +1261,16 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   tileColor: const Color(0xFF14141C),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   leading: Text(item.iconEmoji, style: const TextStyle(fontSize: 32)),
-                  title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  subtitle: Text('${item.subtitle} • ${item.distanceKm} km', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
+                  title: Row(
+                    children: [
+                      Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      if (item.isVerified) ...[
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified, color: Color(0xFF00E676), size: 14),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text('${item.subtitle} • ${item.distanceKm.toStringAsFixed(1)} km away', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
                   trailing: Text(item.price, style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 13)),
                   onTap: () => widget.onTapCard(item),
                 );
@@ -1316,50 +1296,13 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 );
               },
             ),
-
-          // Macro-Zoom Surrounding Rings
-          if (outsideRange.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('SURROUNDING SECTORS & CITY SCOPE', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-                GestureDetector(
-                  onTap: () => widget.onRadiusChanged(15.0),
-                  child: const Text('Expand >', style: TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...outsideRange.map((item) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(10)),
-                  alignment: Alignment.center,
-                  child: Text(item.iconEmoji, style: const TextStyle(fontSize: 22)),
-                ),
-                title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
-                subtitle: Text('${item.sector} • ⚡ ${item.distanceKm.toStringAsFixed(1)} km away', style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
-                trailing: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), elevation: 0),
-                  onPressed: () => widget.onTapCard(item),
-                  child: const Text('View', style: TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            )),
-          ],
         ],
       ),
     );
   }
 }
 
-// ---------------- INTERACTIVE CARD ITEM WITH MEDIA & POLISH ----------------
+// ---------------- INTERACTIVE CARD ITEM WITH VERIFIED BADGE & DISTANCE ----------------
 class InteractiveCardItem extends StatefulWidget {
   final GridListing item;
   final VoidCallback onTap;
@@ -1441,17 +1384,24 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Row(
+                children: [
+                  Flexible(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  if (item.isVerified) ...[
+                    const SizedBox(width: 3),
+                    const Icon(Icons.verified, color: Color(0xFF00E676), size: 13),
+                  ],
+                ],
+              ),
               const SizedBox(height: 2),
               Text(item.subtitle, style: const TextStyle(color: Color(0xFF71717A), fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
-                    child: Text('⚡ ${item.eta}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
+                    child: Text('${item.distanceKm.toStringAsFixed(1)} km away', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(width: 4),
-                  Text('${item.distanceKm.toStringAsFixed(1)} km', style: const TextStyle(color: Color(0xFF71717A), fontSize: 10)),
+                  Text(item.price, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1473,95 +1423,81 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
   }
 }
 
-// ---------------- TAB 2: ANIMATED RADAR SCOPE SCREEN ----------------
-class MapRadarScreen extends StatefulWidget {
+// ---------------- TAB 2: INTERACTIVE OPENSTREETMAP RADAR VIEW (`flutter_map`) ----------------
+class MapRadarView extends StatelessWidget {
   final List<GridListing> listings;
   final double radarRadius;
   final Function(GridListing) onSelectListing;
 
-  const MapRadarScreen({super.key, required this.listings, required this.radarRadius, required this.onSelectListing});
-
-  @override
-  State<MapRadarScreen> createState() => _MapRadarScreenState();
-}
-
-class _MapRadarScreenState extends State<MapRadarScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _sweepCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _sweepCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
-  }
-
-  @override
-  void dispose() {
-    _sweepCtrl.dispose();
-    super.dispose();
-  }
+  const MapRadarView({super.key, required this.listings, required this.radarRadius, required this.onSelectListing});
 
   @override
   Widget build(BuildContext context) {
-    final activeInRadar = widget.listings.where((l) => l.distanceKm <= widget.radarRadius && !l.isSold).toList();
+    final activeInRadar = listings.where((l) => l.distanceKm <= radarRadius && !l.isSold).toList();
 
     return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('RADAR CONCENTRIC SCOPE (${widget.radarRadius.toStringAsFixed(0)} KM)', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
-            const SizedBox(height: 24),
-            Stack(
-              alignment: Alignment.center,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.15), width: 1.5))),
-                Container(width: 200, height: 200, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3), width: 1.5))),
-                Container(width: 100, height: 100, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.5), width: 1.5))),
-                AnimatedBuilder(
-                  animation: _sweepCtrl,
-                  builder: (context, child) {
-                    return Transform.rotate(
-                      angle: _sweepCtrl.value * 2 * pi,
-                      child: Container(
-                        width: 300,
-                        height: 300,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: SweepGradient(
-                            colors: [Colors.transparent, const Color(0xFF00E676).withValues(alpha: 0.35)],
-                            stops: const [0.75, 1.0],
+                Flexible(
+                  child: Text(
+                    '🗺️ OPENSTREETMAP RADAR (${radarRadius.toStringAsFixed(0)} KM)',
+                    style: const TextStyle(color: Color(0xFF71717A), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: const Color(0xFF0E2719), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF00E676))),
+                  child: Text('${activeInRadar.length} Active Pins', style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: FlutterMap(
+              options: const MapOptions(
+                initialCenter: LatLng(28.6139, 77.2090), // Sector 14 Default Center
+                initialZoom: 13.0,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'io.radargrid.app',
+                ),
+                MarkerLayer(
+                  markers: activeInRadar.map((item) {
+                    final lat = item.latitude ?? 28.6139;
+                    final lng = item.longitude ?? 77.2090;
+                    return Marker(
+                      point: LatLng(lat, lng),
+                      width: 50,
+                      height: 50,
+                      child: GestureDetector(
+                        onTap: () => onSelectListing(item),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF14141C),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFF00E676), width: 2),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 4)],
                           ),
+                          alignment: Alignment.center,
+                          child: Text(item.iconEmoji, style: const TextStyle(fontSize: 20)),
                         ),
                       ),
                     );
-                  },
+                  }).toList(),
                 ),
-                const CircleAvatar(radius: 8, backgroundColor: Color(0xFF00E676)),
-                ...activeInRadar.asMap().entries.map((entry) {
-                  final idx = entry.key;
-                  final item = entry.value;
-                  final offset = (idx + 1) * 36.0;
-                  final top = 150 + (idx % 2 == 0 ? offset : -offset) * 0.55;
-                  final left = 150 + (idx % 2 == 1 ? offset : -offset) * 0.65;
-                  return Positioned(
-                    top: top,
-                    left: left,
-                    child: GestureDetector(
-                      onTap: () => widget.onSelectListing(item),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF14141C), border: Border.all(color: const Color(0xFF00E676), width: 1.5)),
-                        child: Text(item.iconEmoji, style: const TextStyle(fontSize: 14)),
-                      ),
-                    ),
-                  );
-                }),
               ],
             ),
-            const SizedBox(height: 24),
-            Text('${activeInRadar.length} active neighborhood nodes inside current scope', style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1837,7 +1773,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   }
 }
 
-// ---------------- TAB 4: PROFILE SCREEN WITH AUTH & MY LISTINGS MANAGEMENT ----------------
+// ---------------- TAB 4: PROFILE SCREEN WITH COMMERCIAL IDENTITY ARCHITECTURE ----------------
 class ProfileScreen extends StatefulWidget {
   final User? user;
   final List<GridListing> listings;
@@ -1984,9 +1920,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           Center(
-            child: Text(
-              user?.email ?? (user == null || user.isAnonymous ? 'Guest Neighbor' : 'Verified Commercial Node'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  user?.email ?? (user == null || user.isAnonymous ? 'Guest Neighbor' : 'Commercial Enterprise Node'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.verified, color: Color(0xFF00E676), size: 16),
+              ],
             ),
           ),
           const SizedBox(height: 4),
@@ -2010,7 +1953,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text('📦 MY LISTINGS MANAGEMENT', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const Text('📦 MY COMMERCIAL LISTINGS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (userListings.isEmpty)
             const Center(child: Text('You have not posted any commercial listings yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
@@ -2027,7 +1970,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+                        Row(
+                          children: [
+                            Flexible(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            if (item.isVerified) ...[
+                              const SizedBox(width: 3),
+                              const Icon(Icons.verified, color: Color(0xFF00E676), size: 12),
+                            ],
+                          ],
+                        ),
                         const SizedBox(height: 2),
                         Text('${item.price} • ${item.isSold ? '🔴 SOLD' : '🟢 ACTIVE'}', style: TextStyle(color: item.isSold ? Colors.redAccent : const Color(0xFF00E676), fontSize: 11)),
                       ],
@@ -2056,8 +2007,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tileColor: const Color(0xFF14141C),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             leading: const Icon(Icons.verified_user, color: Color(0xFF00E676)),
-            title: const Text('Enterprise Verification', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Handshake PINs Active • 12 Completed Deals', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            title: const Text('Enterprise Commercial Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: const Text('Verified Merchant Status • 12 Completed Deals', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
           ),
         ],
       ),
