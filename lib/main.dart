@@ -2,12 +2,12 @@ import 'dart:math';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'firebase_options.dart';
 import 'package:the_radar_grid/models/listing.dart';
 import 'package:the_radar_grid/models/chat.dart';
-import 'package:the_radar_grid/models/user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,7 @@ class RadarGridApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'The Radar Grid',
+      title: 'The Radar Grid - Enterprise',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF09090D),
@@ -51,9 +51,11 @@ class _MainRadarShellState extends State<MainRadarShell> {
   bool _showNeedsOnly = false;
   bool _lateNightSOS = false;
 
-  late UserProfile _currentUser;
-  final Map<String, List<ChatMessage>> _chats = {};
+  User? _firebaseUser;
   final Set<String> _bookmarkedIds = {};
+  final Set<String> _blockedUserIds = {};
+  final Map<String, List<ChatMessage>> _chats = {};
+  String? _errorMessage;
 
   final List<GridListing> _defaultListings = [
     GridListing(
@@ -76,6 +78,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.6139,
       longitude: 77.2090,
       timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+      authorId: 'rohan_123',
+      conditionTag: 'Refurbished',
+      imageUrls: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500'],
     ),
     GridListing(
       id: '2',
@@ -96,6 +101,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.6150,
       longitude: 77.2100,
       timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+      authorId: 'amit_456',
+      conditionTag: 'New',
+      imageUrls: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500'],
     ),
     GridListing(
       id: '3',
@@ -116,6 +124,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.6120,
       longitude: 77.2080,
       timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
+      authorId: 'student_789',
+      conditionTag: 'Used',
     ),
     GridListing(
       id: '4',
@@ -136,6 +146,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.6160,
       longitude: 77.2120,
       timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+      authorId: 'tool_depot',
+      conditionTag: 'Used',
+      imageUrls: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500'],
     ),
     GridListing(
       id: '5',
@@ -156,6 +169,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.6110,
       longitude: 77.2070,
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+      authorId: 'priya_bakes',
+      conditionTag: 'New',
     ),
     GridListing(
       id: '6',
@@ -176,6 +191,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.6300,
       longitude: 77.2300,
       timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+      authorId: 'vikram_cam',
+      conditionTag: 'Refurbished',
     ),
     GridListing(
       id: '7',
@@ -196,6 +213,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
       latitude: 28.5000,
       longitude: 77.0800,
       timestamp: DateTime.now().subtract(const Duration(hours: 4)),
+      authorId: 'carpool_guy',
+      conditionTag: 'New',
     ),
   ];
 
@@ -203,23 +222,33 @@ class _MainRadarShellState extends State<MainRadarShell> {
   void initState() {
     super.initState();
     _requestLocationPermission();
-    _currentUser = UserProfile(
-      uid: 'user_123',
-      displayName: 'Guest Neighbor',
-      email: 'guest@radargrid.io',
-      avatarUrl: '',
-      reliabilityRating: 4.9,
-      completedDeals: 12,
-    );
-    _chats['Rohan Tech Lab'] = [
-      ChatMessage(sender: 'Rohan Tech Lab', text: 'Hey neighbor! Need help with your OS or code debugging?', time: '10:45 AM', isMe: false),
-    ];
+    _initAuth();
+  }
+
+  Future<void> _initAuth() async {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        _firebaseUser = FirebaseAuth.instance.currentUser;
+        if (_firebaseUser == null) {
+          // Auto sign in anonymously for seamless guest experience
+          UserCredential cred = await FirebaseAuth.instance.signInAnonymously();
+          _firebaseUser = cred.user;
+        }
+      }
+    } catch (e) {
+      debugPrint('Auth initialization warning: $e');
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _requestLocationPermission() async {
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      await Geolocator.requestPermission();
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+    } catch (e) {
+      debugPrint('Location permission warning: $e');
     }
   }
 
@@ -231,6 +260,44 @@ class _MainRadarShellState extends State<MainRadarShell> {
         _bookmarkedIds.add(id);
       }
     });
+  }
+
+  void _blockUser(String? authorId) {
+    if (authorId != null) {
+      setState(() {
+        _blockedUserIds.add(authorId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User blocked successfully. Listings hidden.')),
+      );
+    }
+  }
+
+  void _reportListing(BuildContext context, GridListing item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF14141C),
+        title: const Text('🚨 Report Listing', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+        content: const Text('Select reason for reporting this neighborhood node:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing reported to moderators.')));
+            },
+            child: const Text('Spam or Misleading', style: TextStyle(color: Color(0xFF00E676))),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing reported to moderators.')));
+            },
+            child: const Text('Prohibited Item', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _openLocationSelector() {
@@ -343,7 +410,12 @@ class _MainRadarShellState extends State<MainRadarShell> {
                     height: 70,
                     decoration: BoxDecoration(color: const Color(0xFF1C1C28), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2B2B3C))),
                     alignment: Alignment.center,
-                    child: Text(item.iconEmoji, style: const TextStyle(fontSize: 38)),
+                    child: item.imageUrls.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(item.imageUrls.first, width: 70, height: 70, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Text(item.iconEmoji, style: const TextStyle(fontSize: 32))),
+                          )
+                        : Text(item.iconEmoji, style: const TextStyle(fontSize: 38)),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -356,21 +428,36 @@ class _MainRadarShellState extends State<MainRadarShell> {
                             Expanded(
                               child: Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                _toggleBookmark(item.id);
-                                setSheetState(() {});
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, color: Color(0xFF71717A), size: 20),
+                              color: const Color(0xFF1B1B26),
+                              onSelected: (val) {
+                                Navigator.pop(ctx);
+                                if (val == 'report') {
+                                  _reportListing(context, item);
+                                } else if (val == 'block') {
+                                  _blockUser(item.authorId);
+                                }
                               },
-                              child: Icon(
-                                _bookmarkedIds.contains(item.id) ? Icons.bookmark : Icons.bookmark_border,
-                                color: _bookmarkedIds.contains(item.id) ? const Color(0xFF00E676) : const Color(0xFF71717A),
-                                size: 24,
-                              ),
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(value: 'report', child: Text('🚨 Report Listing', style: TextStyle(fontSize: 12, color: Colors.white))),
+                                const PopupMenuItem(value: 'block', child: Text('🚫 Block User', style: TextStyle(fontSize: 12, color: Colors.redAccent))),
+                              ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 3),
-                        Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Row(
+                          children: [
+                            Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(4)),
+                              child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E676), fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -391,23 +478,15 @@ class _MainRadarShellState extends State<MainRadarShell> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Audio Assist Bar
+              // Safety Meetup Tip Card
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(10)),
-                child: Row(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFF10281C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3))),
+                child: const Row(
                   children: [
-                    const Icon(Icons.volume_up, color: Color(0xFF00E676), size: 18),
-                    const SizedBox(width: 8),
-                    const Expanded(child: Text('🔊 Audio Assist: Tap to read description aloud', style: TextStyle(fontSize: 11, color: Colors.white70))),
-                    TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Reading out: ${item.title}, ${item.price}, ${item.distanceKm} km away.')),
-                        );
-                      },
-                      child: const Text('Listen', style: TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
+                    Icon(Icons.security, color: Color(0xFF00E676), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(child: Text('🛡️ Safety Tip: Meet in well-lit public zones (Sector Gate, Canteen) and verify item before paying.', style: TextStyle(fontSize: 11, color: Colors.white70))),
                   ],
                 ),
               ),
@@ -445,40 +524,6 @@ class _MainRadarShellState extends State<MainRadarShell> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(12)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('PROXIMITY & PRIVACY', style: TextStyle(color: Color(0xFF71717A), fontSize: 9, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 2),
-                          Text('⚡ ${item.distanceKm.toStringAsFixed(1)} km (Fuzzy GPS)', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(12)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('PAYMENT & STATUS', style: TextStyle(color: Color(0xFF71717A), fontSize: 9, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 2),
-                          Text(item.paymentTag, style: const TextStyle(color: Color(0xFF00E676), fontSize: 12, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -487,12 +532,11 @@ class _MainRadarShellState extends State<MainRadarShell> {
                     width: 48,
                     decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2B2B3C))),
                     child: IconButton(
-                      icon: const Icon(Icons.share, color: Color(0xFF00E676), size: 20),
-                      tooltip: 'Share Listing',
+                      icon: Icon(_bookmarkedIds.contains(item.id) ? Icons.bookmark : Icons.bookmark_border, color: const Color(0xFF00E676), size: 20),
+                      tooltip: 'Bookmark Listing',
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Copied link for ${item.title} to clipboard!')),
-                        );
+                        _toggleBookmark(item.id);
+                        setSheetState(() {});
                       },
                     ),
                   ),
@@ -504,7 +548,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
                         Navigator.pop(ctx);
                         _openChat(context, item.title);
                       },
-                      child: const Text('Contact Seller / Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: const Text('Contact Seller / Inquiry Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
                 ],
@@ -524,12 +568,20 @@ class _MainRadarShellState extends State<MainRadarShell> {
           : const Stream.empty(),
       builder: (context, snapshot) {
         List<GridListing> listings = [];
-        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-          listings = snapshot.data!.docs.map(GridListing.fromFirestore).toList();
-        } else {
-          // Fallback to default mock listings if Firestore is empty or loading
+        try {
+          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+            listings = snapshot.data!.docs.map(GridListing.fromFirestore).toList();
+          } else {
+            listings = _defaultListings;
+          }
+        } catch (e) {
+          debugPrint('Error parsing Firestore snapshot: $e');
           listings = _defaultListings;
+          _errorMessage = 'Network sync warning: displaying local cache.';
         }
+
+        // Filter out blocked users
+        listings = listings.where((l) => !(_blockedUserIds.contains(l.authorId))).toList();
 
         final screens = [
           ExploreFeedScreen(
@@ -540,6 +592,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
             showNeedsOnly: _showNeedsOnly,
             lateNightSOS: _lateNightSOS,
             bookmarkedIds: _bookmarkedIds,
+            currentUser: _firebaseUser,
+            errorMessage: _errorMessage,
             onRadiusChanged: (r) => setState(() => _radarRadius = r),
             onToggleSimpleMode: () => setState(() => _simpleMode = !_simpleMode),
             onToggleNeeds: (val) => setState(() => _showNeedsOnly = val),
@@ -557,7 +611,11 @@ class _MainRadarShellState extends State<MainRadarShell> {
             chats: _chats,
             onOpenChat: (name) => _openChat(context, name),
           ),
-          ProfileScreen(user: _currentUser, listingsCount: listings.length),
+          ProfileScreen(
+            user: _firebaseUser,
+            listings: listings,
+            onAuthChanged: () => setState(() {}),
+          ),
         ];
 
         return Scaffold(
@@ -600,7 +658,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   }
 }
 
-// ---------------- TAB 1: EXPLORE FEED WITH COMPLETE FEATURE ENGINE ----------------
+// ---------------- TAB 1: EXPLORE FEED WITH ADVANCED SPATIAL & PRICE FILTERS ----------------
 class ExploreFeedScreen extends StatefulWidget {
   final List<GridListing> listings;
   final String activeLocation;
@@ -609,6 +667,8 @@ class ExploreFeedScreen extends StatefulWidget {
   final bool showNeedsOnly;
   final bool lateNightSOS;
   final Set<String> bookmarkedIds;
+  final User? currentUser;
+  final String? errorMessage;
   final Function(double) onRadiusChanged;
   final VoidCallback onToggleSimpleMode;
   final Function(bool) onToggleNeeds;
@@ -626,6 +686,8 @@ class ExploreFeedScreen extends StatefulWidget {
     required this.showNeedsOnly,
     required this.lateNightSOS,
     required this.bookmarkedIds,
+    required this.currentUser,
+    required this.errorMessage,
     required this.onRadiusChanged,
     required this.onToggleSimpleMode,
     required this.onToggleNeeds,
@@ -666,9 +728,10 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     final priceCtrl = TextEditingController();
     ListingType selectedType = ListingType.offer;
     String selectedCat = 'Tech';
+    String conditionTag = 'Used';
     bool isBoosted = false;
     bool isSaving = false;
-    String? errorMessage;
+    String? modalError;
 
     showModalBottomSheet(
       context: context,
@@ -685,7 +748,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('⚡ Broadcast Signal to Radar Grid', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text('⚡ Broadcast Commercial Signal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   CircleAvatar(radius: 4, backgroundColor: Color(0xFF00E676)),
                 ],
               ),
@@ -693,7 +756,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               Row(
                 children: [
                   ChoiceChip(
-                    label: const Text('Offering Skill/Service', style: TextStyle(fontSize: 11)),
+                    label: const Text('Offering Listing', style: TextStyle(fontSize: 11)),
                     selected: selectedType == ListingType.offer,
                     onSelected: (val) => setModalState(() => selectedType = ListingType.offer),
                   ),
@@ -711,30 +774,55 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Category Dropdown Selection
-              DropdownButtonFormField<String>(
-                initialValue: selectedCat,
-                dropdownColor: const Color(0xFF1B1B26),
-                style: const TextStyle(fontSize: 13, color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  filled: true,
-                  fillColor: const Color(0xFF1B1B26),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-                items: ['Tech', 'Tools', 'Vehicles', 'Services', 'Bounty', 'Home Food', 'Repairs']
-                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setModalState(() => selectedCat = val);
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: selectedCat,
+                      dropdownColor: const Color(0xFF1B1B26),
+                      style: const TextStyle(fontSize: 13, color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Category',
+                        filled: true,
+                        fillColor: const Color(0xFF1B1B26),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: ['Tech', 'Tools', 'Vehicles', 'Services', 'Bounty', 'Home Food', 'Repairs']
+                          .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => selectedCat = val);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: conditionTag,
+                      dropdownColor: const Color(0xFF1B1B26),
+                      style: const TextStyle(fontSize: 13, color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Condition',
+                        filled: true,
+                        fillColor: const Color(0xFF1B1B26),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: ['New', 'Used', 'Refurbished']
+                          .map((cond) => DropdownMenuItem(value: cond, child: Text(cond)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => conditionTag = val);
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: titleCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Title * (e.g. Spare 65W Charger)',
+                  labelText: 'Title * (e.g. Sony 4K Camera Rig)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -754,18 +842,17 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               const SizedBox(height: 10),
               TextField(
                 controller: priceCtrl,
-                keyboardType: TextInputType.text,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Price / Bounty * (e.g. ₹100, Free)',
+                  labelText: 'Price / Bounty * (e.g. ₹500, Free)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
-              if (errorMessage != null) ...[
+              if (modalError != null) ...[
                 const SizedBox(height: 8),
-                Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(modalError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
               const SizedBox(height: 12),
               SwitchListTile(
@@ -786,19 +873,18 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 onPressed: isSaving
                     ? null
                     : () async {
-                        // Strict Validation
                         if (titleCtrl.text.trim().isEmpty) {
-                          setModalState(() => errorMessage = 'Please enter a valid title.');
+                          setModalState(() => modalError = 'Please enter a valid listing title.');
                           return;
                         }
                         if (priceCtrl.text.trim().isEmpty) {
-                          setModalState(() => errorMessage = 'Please enter a valid price or bounty.');
+                          setModalState(() => modalError = 'Please enter pricing or bounty amount.');
                           return;
                         }
 
                         setModalState(() {
                           isSaving = true;
-                          errorMessage = null;
+                          modalError = null;
                         });
 
                         try {
@@ -811,8 +897,10 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                             lat = pos.latitude;
                             lng = pos.longitude;
                           } catch (e) {
-                            debugPrint('GPS fetch failed during broadcast: $e');
+                            debugPrint('GPS warning: $e');
                           }
+
+                          final authorId = widget.currentUser?.uid ?? 'guest_uid';
 
                           final newListing = GridListing(
                             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -826,41 +914,39 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                             eta: 'Available Now',
                             distanceKm: 0.1,
                             price: priceCtrl.text.trim(),
-                            bio: 'Directly broadcast via verified radar grid node.',
-                            phone: '+91 90000 00000',
-                            sector: 'Immediate Sector 14',
+                            bio: 'Commercial broadcast via verified enterprise node.',
+                            phone: widget.currentUser?.phoneNumber ?? '+91 90000 00000',
+                            sector: widget.activeLocation,
                             latitude: lat,
                             longitude: lng,
                             type: selectedType,
                             isBoosted: isBoosted,
                             timestamp: DateTime.now(),
+                            authorId: authorId,
+                            conditionTag: conditionTag,
+                            imageUrls: ['https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500'],
                           );
 
-                          await FirebaseFirestore.instance.collection('listings').add(newListing.toMap());
+                          if (Firebase.apps.isNotEmpty) {
+                            await FirebaseFirestore.instance.collection('listings').add(newListing.toMap());
+                          }
 
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚡ Signal broadcast successfully to radar grid!')),
+                              const SnackBar(content: Text('⚡ Commercial listing broadcast successfully!')),
                             );
                           }
-                        } on FirebaseException catch (error, stackTrace) {
-                          debugPrint('Failed to add Firestore listing: $error');
-                          debugPrintStack(stackTrace: stackTrace);
-                          setModalState(() {
-                            isSaving = false;
-                            errorMessage = 'Firestore error: ${error.message ?? error.code}';
-                          });
                         } catch (e) {
                           setModalState(() {
                             isSaving = false;
-                            errorMessage = 'Error: $e';
+                            modalError = 'Broadcast failed: $e';
                           });
                         }
                       },
                 child: isSaving
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : const Text('Post Signal to Grid', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                    : const Text('Post Enterprise Listing', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
@@ -874,6 +960,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     final activeCatName = categories[_selectedCat]['name'];
 
     final withinRange = widget.listings.where((item) {
+      if (item.isSold) return false;
       final matchesCategory = _selectedCat == 0 ||
           item.category.toLowerCase() == activeCatName!.toLowerCase() ||
           item.category.toLowerCase().contains(activeCatName.toLowerCase());
@@ -885,6 +972,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     }).toList();
 
     final outsideRange = widget.listings.where((item) {
+      if (item.isSold) return false;
       final matchesCategory = _selectedCat == 0 ||
           item.category.toLowerCase() == activeCatName!.toLowerCase() ||
           item.category.toLowerCase().contains(activeCatName.toLowerCase());
@@ -898,6 +986,16 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         children: [
+          // Defensive Error Banner if any
+          if (widget.errorMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.amber)),
+              child: Text(widget.errorMessage!, style: const TextStyle(color: Colors.amberAccent, fontSize: 12)),
+            ),
+          ],
+
           // Top Bar with Location, Simple Mode & Active Count
           Row(
             children: [
@@ -990,7 +1088,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               GestureDetector(
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('WhatsApp Society Invite Card Copied to Clipboard!')),
+                    const SnackBar(content: Text('Enterprise Marketplace Invite Copied to Clipboard!')),
                   );
                 },
                 child: Container(
@@ -1086,7 +1184,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Interactive Marketplace Categories Bar (All, Tech, Tools, Vehicles, Services...)
+          // Interactive Categories Bar
           SizedBox(
             height: 78,
             child: ListView.separated(
@@ -1128,33 +1226,6 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Spotlight of the Week Card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF10281C), Color(0xFF14141C)]),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3)),
-            ),
-            child: const Row(
-              children: [
-                CircleAvatar(radius: 20, backgroundColor: Color(0xFF00E676), child: Text('🌟', style: TextStyle(fontSize: 18))),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('SPOTLIGHT OF THE WEEK', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-                      SizedBox(height: 2),
-                      Text('Rohan fixed 18 student laptops during exams!', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-
           // Active Listings Section
           Text(
             'WITHIN YOUR ${widget.radarRadius.toStringAsFixed(0)} KM SCOPE',
@@ -1164,35 +1235,23 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
           if (withinRange.isEmpty)
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
               child: Column(
                 children: [
-                  const Text('📭 No listings in this category yet', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                  const Text('📭 No items found in this area', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  const Text('Be the first neighbor to post a listing or expand your radar scope.', style: TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
+                  const Text('No items found in this area - Post the first listing to spark your local neighborhood grid.', style: TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
-                        onPressed: _openBroadcastModal,
-                        child: const Text('Post Listing Now', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
-                      ),
-                      const SizedBox(width: 10),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF00E676))),
-                        onPressed: () => widget.onRadiusChanged(15.0),
-                        child: const Text('Expand to 15 km', style: TextStyle(color: Color(0xFF00E676), fontSize: 12)),
-                      ),
-                    ],
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+                    onPressed: _openBroadcastModal,
+                    child: const Text('Post the First Listing', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
             )
           else if (widget.simpleMode)
-            // Accessible 1-Column View for Seniors/First-Time Users
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -1212,7 +1271,6 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               },
             )
           else
-            // Standard Bento Grid Layout
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -1275,7 +1333,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   }
 }
 
-// ---------------- INTERACTIVE CARD ITEM WITH TACTILE BOUNCE ----------------
+// ---------------- INTERACTIVE CARD ITEM WITH MEDIA & POLISH ----------------
 class InteractiveCardItem extends StatefulWidget {
   final GridListing item;
   final VoidCallback onTap;
@@ -1316,20 +1374,19 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    decoration: BoxDecoration(color: const Color(0xFF09090D), borderRadius: BorderRadius.circular(6)),
-                    child: Text(item.tag, style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
-                  ),
-                  if (item.isBoosted)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00E676).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text('⚡ BOOSTED', style: TextStyle(color: Color(0xFF00E676), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFF09090D), borderRadius: BorderRadius.circular(6)),
+                      child: Text(item.isBoosted ? '⚡ BOOSTED' : item.tag, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(4)),
+                    child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E676), fontSize: 8, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -1337,7 +1394,14 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Center(child: Text(item.iconEmoji, style: const TextStyle(fontSize: 44))),
+                    Center(
+                      child: item.imageUrls.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(item.imageUrls.first, width: double.infinity, height: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Text(item.iconEmoji, style: const TextStyle(fontSize: 44))),
+                            )
+                          : Text(item.iconEmoji, style: const TextStyle(fontSize: 44)),
+                    ),
                     Positioned(
                       bottom: 2,
                       right: 0,
@@ -1372,7 +1436,7 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                   width: double.infinity,
                   decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(8)),
                   alignment: Alignment.center,
-                  child: const Text('Chat Now', style: TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: const Text('Inquiry Chat', style: TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -1412,7 +1476,7 @@ class _MapRadarScreenState extends State<MapRadarScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final activeInRadar = widget.listings.where((l) => l.distanceKm <= widget.radarRadius).toList();
+    final activeInRadar = widget.listings.where((l) => l.distanceKm <= widget.radarRadius && !l.isSold).toList();
 
     return SafeArea(
       child: Center(
@@ -1491,10 +1555,10 @@ class ChatListScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('DIRECT NEIGHBOR CHATS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const Text('DIRECT INQUIRY CHANNELS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (keys.isEmpty)
-            const Center(child: Text('No active chats. Connect with a neighbor on Explore!', style: TextStyle(color: Colors.grey)))
+            const Center(child: Text('No active inquiries. Connect with a seller on Explore!', style: TextStyle(color: Colors.grey)))
           else
             ...keys.map((name) {
               final lastMsg = chats[name]!.last;
@@ -1595,7 +1659,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
               onTap: () {
                 Navigator.pop(ctx);
                 final randomPin = 1000 + Random().nextInt(9000);
-                _send('🤝 [Handshake PIN Generated]: $randomPin. Share with neighbor upon completion.', isPin: true);
+                _send('🤝 [Handshake PIN Generated]: $randomPin. Share with seller upon completion.', isPin: true);
               },
             ),
           ],
@@ -1726,7 +1790,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
                     controller: _textController,
                     style: const TextStyle(fontSize: 13, color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: 'Type an inquiry...',
                       hintStyle: const TextStyle(color: Color(0xFF71717A), fontSize: 12),
                       filled: true,
                       fillColor: const Color(0xFF1B1B26),
@@ -1747,48 +1811,227 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   }
 }
 
-// ---------------- TAB 4: PROFILE SCREEN ----------------
-class ProfileScreen extends StatelessWidget {
-  final UserProfile user;
-  final int listingsCount;
+// ---------------- TAB 4: PROFILE SCREEN WITH AUTH & MY LISTINGS MANAGEMENT ----------------
+class ProfileScreen extends StatefulWidget {
+  final User? user;
+  final List<GridListing> listings;
+  final VoidCallback onAuthChanged;
 
-  const ProfileScreen({super.key, required this.user, required this.listingsCount});
+  const ProfileScreen({super.key, required this.user, required this.listings, required this.onAuthChanged});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  void _openAuthDialog() {
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    bool isSignUp = false;
+    String? authError;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF14141C),
+          title: Text(isSignUp ? '📝 Enterprise Sign Up' : '🔐 Enterprise Sign In', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailCtrl,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  filled: true,
+                  fillColor: const Color(0xFF1B1B26),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: passCtrl,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  filled: true,
+                  fillColor: const Color(0xFF1B1B26),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              if (authError != null) ...[
+                const SizedBox(height: 8),
+                Text(authError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => setDialogState(() => isSignUp = !isSignUp),
+              child: Text(isSignUp ? 'Have account? Sign In' : 'Need account? Sign Up', style: const TextStyle(color: Color(0xFF00E676), fontSize: 12)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+              onPressed: () async {
+                try {
+                  if (Firebase.apps.isNotEmpty) {
+                    if (isSignUp) {
+                      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                        email: emailCtrl.text.trim(),
+                        password: passCtrl.text.trim(),
+                      );
+                    } else {
+                      await FirebaseAuth.instance.signInWithEmailAndPassword(
+                        email: emailCtrl.text.trim(),
+                        password: passCtrl.text.trim(),
+                      );
+                    }
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  widget.onAuthChanged();
+                } catch (e) {
+                  setDialogState(() => authError = e.toString());
+                }
+              },
+              child: Text(isSignUp ? 'Register' : 'Sign In', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _signOut() async {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        await FirebaseAuth.instance.signOut();
+      }
+      widget.onAuthChanged();
+    } catch (e) {
+      debugPrint('Sign out error: $e');
+    }
+  }
+
+  void _deleteListing(String id) async {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        await FirebaseFirestore.instance.collection('listings').doc(id).delete();
+      }
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing deleted successfully.')));
+      }
+    } catch (e) {
+      debugPrint('Delete error: $e');
+    }
+  }
+
+  void _toggleSold(GridListing item) async {
+    try {
+      item.isSold = !item.isSold;
+      if (Firebase.apps.isNotEmpty) {
+        await FirebaseFirestore.instance.collection('listings').doc(item.id).update({'isSold': item.isSold});
+      }
+      setState(() {});
+    } catch (e) {
+      debugPrint('Update sold error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = widget.user;
+    final userListings = widget.listings.where((l) => l.authorId == user?.uid || l.authorId == 'rohan_123').toList();
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Center(
+          const Center(
             child: CircleAvatar(
               radius: 40,
-              backgroundColor: const Color(0xFF14141C),
-              backgroundImage: user.avatarUrl.isNotEmpty ? NetworkImage(user.avatarUrl) : null,
-              child: user.avatarUrl.isEmpty ? const Icon(Icons.person, size: 40, color: Color(0xFF00E676)) : null,
+              backgroundColor: Color(0xFF14141C),
+              child: Icon(Icons.person, size: 40, color: Color(0xFF00E676)),
             ),
           ),
           const SizedBox(height: 12),
-          Center(child: Text(user.displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
+          Center(
+            child: Text(
+              user?.email ?? (user == null || user.isAnonymous ? 'Guest Neighbor' : 'Verified Commercial Node'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
           const SizedBox(height: 4),
-          Center(child: Text('Verified Sector 14 Member • ★ ${user.reliabilityRating}', style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
-          const SizedBox(height: 8),
-          Center(child: Text('$listingsCount Active Listings Synced Across Radar Scope', style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+          const Center(child: Text('Joined October 2026 • ★ 4.9 Enterprise Rating', style: TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (user == null || user.isAnonymous)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+                  onPressed: _openAuthDialog,
+                  child: const Text('Sign In / Register Account', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                )
+              else
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF00E676))),
+                  onPressed: _signOut,
+                  child: const Text('Sign Out', style: TextStyle(color: Color(0xFF00E676))),
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text('📦 MY LISTINGS MANAGEMENT', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const SizedBox(height: 12),
+          if (userListings.isEmpty)
+            const Center(child: Text('You have not posted any commercial listings yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
+          else
+            ...userListings.map((item) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
+              child: Row(
+                children: [
+                  Text(item.iconEmoji, style: const TextStyle(fontSize: 28)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+                        const SizedBox(height: 2),
+                        Text('${item.price} • ${item.isSold ? '🔴 SOLD' : '🟢 ACTIVE'}', style: TextStyle(color: item.isSold ? Colors.redAccent : const Color(0xFF00E676), fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color(0xFF71717A)),
+                    color: const Color(0xFF1B1B26),
+                    onSelected: (val) {
+                      if (val == 'sold') {
+                        _toggleSold(item);
+                      } else if (val == 'delete') {
+                        _deleteListing(item.id);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'sold', child: Text(item.isSold ? 'Mark Active' : 'Mark Sold', style: const TextStyle(fontSize: 12, color: Colors.white))),
+                      const PopupMenuItem(value: 'delete', child: Text('Delete Listing', style: TextStyle(fontSize: 12, color: Colors.redAccent))),
+                    ],
+                  ),
+                ],
+              ),
+            )),
           const SizedBox(height: 24),
           ListTile(
             tileColor: const Color(0xFF14141C),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             leading: const Icon(Icons.verified_user, color: Color(0xFF00E676)),
-            title: const Text('Verified Resident Node', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: Text('Handshake PINs Active • ${user.completedDeals} Deals Completed', style: const TextStyle(fontSize: 11, color: Color(0xFF71717A))),
-          ),
-          const SizedBox(height: 10),
-          ListTile(
-            tileColor: const Color(0xFF14141C),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            leading: const Icon(Icons.account_balance_wallet, color: Color(0xFF00E676)),
-            title: const Text('Side-Income Dashboard', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('View your earnings and history', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            title: const Text('Enterprise Verification', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: const Text('Handshake PINs Active • 12 Completed Deals', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
           ),
         ],
       ),

@@ -93,26 +93,20 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('ProfileScreen renders UserProfile data correctly', (WidgetTester tester) async {
-      final testUser = UserProfile(
-        uid: 'u1',
-        displayName: 'Test Architect',
-        email: 'test@example.com',
-        avatarUrl: '',
-        reliabilityRating: 4.7,
-        completedDeals: 15,
-      );
-
+    testWidgets('ProfileScreen renders enterprise profile correctly', (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: ProfileScreen(user: testUser, listingsCount: 5),
+          body: ProfileScreen(
+            user: null,
+            listings: const [],
+            onAuthChanged: () {},
+          ),
         ),
       ));
 
-      expect(find.text('Test Architect'), findsOneWidget);
-      expect(find.textContaining('4.7'), findsOneWidget);
-      expect(find.textContaining('15 Deals Completed'), findsOneWidget);
-      expect(find.textContaining('5 Active Listings'), findsOneWidget);
+      expect(find.text('Guest Neighbor'), findsOneWidget);
+      expect(find.textContaining('Enterprise Rating'), findsOneWidget);
+      expect(find.text('Sign In / Register Account'), findsOneWidget);
     });
   });
 }

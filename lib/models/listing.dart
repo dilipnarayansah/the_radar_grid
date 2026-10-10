@@ -26,6 +26,9 @@ class GridListing {
   final String? authorId; // Security: Link to owner
   final bool isBoosted;   // Feature: ₹29 pay-to-boost
   final DateTime? timestamp;
+  final List<String> imageUrls;
+  final String conditionTag; // 'New', 'Used', 'Refurbished'
+  bool isSold;
   bool isFavorite;
 
   GridListing({
@@ -53,6 +56,9 @@ class GridListing {
     this.authorId,
     this.isBoosted = false,
     this.timestamp,
+    this.imageUrls = const [],
+    this.conditionTag = 'Used',
+    this.isSold = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -79,6 +85,9 @@ class GridListing {
     'authorId': authorId,
     'isBoosted': isBoosted,
     'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
+    'imageUrls': imageUrls,
+    'conditionTag': conditionTag,
+    'isSold': isSold,
   };
 
   factory GridListing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -91,6 +100,12 @@ class GridListing {
       parsedTimestamp = tsData.toDate();
     } else if (tsData is String) {
       parsedTimestamp = DateTime.tryParse(tsData);
+    }
+
+    final rawImages = data['imageUrls'];
+    List<String> parsedImages = [];
+    if (rawImages is List) {
+      parsedImages = rawImages.map((e) => e.toString()).toList();
     }
 
     return GridListing(
@@ -121,6 +136,9 @@ class GridListing {
       authorId: data['authorId'] as String?,
       isBoosted: data['isBoosted'] as bool? ?? false,
       timestamp: parsedTimestamp,
+      imageUrls: parsedImages,
+      conditionTag: data['conditionTag'] as String? ?? 'Used',
+      isSold: data['isSold'] as bool? ?? false,
     );
   }
 }
