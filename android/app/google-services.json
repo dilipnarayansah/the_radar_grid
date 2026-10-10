@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "942388891595",
+    "project_id": "radar-grid-15e35",
+    "storage_bucket": "radar-grid-15e35.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942388891595:android:747f13332c23b83c88304e",
+        "android_client_info": {
+          "package_name": "com.radargrid.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2yGi0-6fvCmXzqw58QCvVo6W5eRYIVQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,8 +1,14 @@
 import 'dart:math';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const RadarGridApp());
 }
 
@@ -44,6 +50,8 @@ class GridListing {
   final String bio;
   final String phone;
   final String sector;
+  final double? latitude;
+  final double? longitude;
   final ListingType type;
   final bool isVerified;
   final String paymentTag;
@@ -65,12 +73,69 @@ class GridListing {
     required this.bio,
     required this.phone,
     required this.sector,
+    this.latitude,
+    this.longitude,
     this.type = ListingType.offer,
     this.isVerified = true,
     this.paymentTag = '📱 UPI / Cash',
     this.statusText = '🟢 Active Now',
     this.isFavorite = false,
   });
+
+  Map<String, dynamic> toMap() => {
+    'title': title,
+    'subtitle': subtitle,
+    'category': category,
+    'tag': tag,
+    'iconEmoji': iconEmoji,
+    'rating': rating,
+    'reviewsCount': reviewsCount,
+    'eta': eta,
+    'distanceKm': distanceKm,
+    'price': price,
+    'bio': bio,
+    'phone': phone,
+    'sector': sector,
+    'latitude': latitude,
+    'longitude': longitude,
+    'type': type.name,
+    'isVerified': isVerified,
+    'paymentTag': paymentTag,
+    'statusText': statusText,
+    'isFavorite': isFavorite,
+  };
+
+  factory GridListing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    final typeName = data['type'] as String?;
+
+    return GridListing(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      subtitle: data['subtitle'] as String? ?? '',
+      category: data['category'] as String? ?? '',
+      tag: data['tag'] as String? ?? '',
+      iconEmoji: data['iconEmoji'] as String? ?? '',
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+      reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
+      eta: data['eta'] as String? ?? '',
+      distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0.0,
+      price: data['price'] as String? ?? '',
+      bio: data['bio'] as String? ?? '',
+      phone: data['phone'] as String? ?? '',
+      sector: data['sector'] as String? ?? '',
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
+      type: ListingType.values.firstWhere(
+        (value) => value.name == typeName,
+        orElse: () => ListingType.offer,
+      ),
+      isVerified: data['isVerified'] as bool? ?? true,
+      paymentTag: data['paymentTag'] as String? ?? '📱 UPI / Cash',
+      statusText: data['statusText'] as String? ?? '🟢 Active Now',
+      isFavorite: data['isFavorite'] as bool? ?? false,
+    );
+  }
 }
 
 class ChatMessage {
@@ -112,6 +177,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   bool _lateNightSOS = false;
 
   late List<GridListing> _listings;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _listingsSubscription;
   final Map<String, List<ChatMessage>> _chats = {};
   final Set<String> _bookmarkedIds = {};
 
@@ -245,6 +311,28 @@ class _MainRadarShellState extends State<MainRadarShell> {
     _chats['Rohan Tech Lab'] = [
       ChatMessage(sender: 'Rohan Tech Lab', text: 'Hey neighbor! Need help with your OS or code debugging?', time: '10:45 AM', isMe: false),
     ];
+
+    _listingsSubscription = FirebaseFirestore.instance
+        .collection('listings')
+        .snapshots()
+        .listen(
+          (snapshot) {
+            if (!mounted) return;
+            setState(() {
+              _listings = snapshot.docs.map(GridListing.fromFirestore).toList();
+            });
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            debugPrint('Failed to listen to Firestore listings: $error');
+            debugPrintStack(stackTrace: stackTrace);
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _listingsSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _requestLocationPermission() async {
@@ -254,10 +342,8 @@ class _MainRadarShellState extends State<MainRadarShell> {
     }
   }
 
-  void _addListing(GridListing listing) {
-    setState(() {
-      _listings.insert(0, listing);
-    });
+  Future<void> _addListing(GridListing listing) {
+    return FirebaseFirestore.instance.collection('listings').add(listing.toMap());
   }
 
   void _toggleBookmark(String id) {
@@ -602,7 +688,7 @@ class ExploreFeedScreen extends StatefulWidget {
   final Function(bool) onToggleNeeds;
   final Function(bool) onToggleNightSOS;
   final VoidCallback onOpenLocationSelector;
-  final Function(GridListing) onAddListing;
+  final Future<void> Function(GridListing) onAddListing;
   final Function(String) onOpenChat;
   final Function(GridListing) onTapCard;
 
@@ -729,26 +815,36 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   if (titleCtrl.text.isNotEmpty) {
-                    widget.onAddListing(GridListing(
-                      id: DateTime.now().toString(),
-                      title: titleCtrl.text,
-                      subtitle: subCtrl.text.isEmpty ? 'Available in Local Grid' : subCtrl.text,
-                      category: selectedType == ListingType.need ? 'Bounty' : 'Tech & Fix',
-                      tag: selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL',
-                      iconEmoji: selectedType == ListingType.need ? '💸' : '⚡',
-                      rating: 5.0,
-                      reviewsCount: 1,
-                      eta: 'Available Now',
-                      distanceKm: 0.2,
-                      price: priceCtrl.text.isEmpty ? 'Free' : priceCtrl.text,
-                      bio: 'Newly registered listing broadcast across the neighborhood scope.',
-                      phone: '+91 90000 00000',
-                      sector: 'Immediate Sector',
-                      type: selectedType,
-                    ));
-                    Navigator.pop(ctx);
+                    try {
+                      await widget.onAddListing(GridListing(
+                        id: DateTime.now().toString(),
+                        title: titleCtrl.text,
+                        subtitle: subCtrl.text.isEmpty ? 'Available in Local Grid' : subCtrl.text,
+                        category: selectedType == ListingType.need ? 'Bounty' : 'Tech & Fix',
+                        tag: selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL',
+                        iconEmoji: selectedType == ListingType.need ? '💸' : '⚡',
+                        rating: 5.0,
+                        reviewsCount: 1,
+                        eta: 'Available Now',
+                        distanceKm: 0.2,
+                        price: priceCtrl.text.isEmpty ? 'Free' : priceCtrl.text,
+                        bio: 'Newly registered listing broadcast across the neighborhood scope.',
+                        phone: '+91 90000 00000',
+                        sector: 'Immediate Sector',
+                        type: selectedType,
+                      ));
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } on FirebaseException catch (error, stackTrace) {
+                      debugPrint('Failed to add Firestore listing: $error');
+                      debugPrintStack(stackTrace: stackTrace);
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Could not post listing: ${error.message ?? error.code}')),
+                        );
+                      }
+                    }
                   }
                 },
                 child: const Text('Post Signal to Grid', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
