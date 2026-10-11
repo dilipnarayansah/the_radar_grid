@@ -55,10 +55,22 @@ class _SpotListingCardState extends State<SpotListingCard> {
                   Flexible(
                     child: Text(item.statusText, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 9, fontWeight: FontWeight.bold)),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(4)),
-                    child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 8, fontWeight: FontWeight.bold)),
+                  Row(
+                    children: [
+                      if (item.isBoosted) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(color: const Color(0xFFFF9800), borderRadius: BorderRadius.circular(4)),
+                          child: const Text('⚡ BOOSTED', style: TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(4)),
+                        child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 8, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
                 ],
               ),
