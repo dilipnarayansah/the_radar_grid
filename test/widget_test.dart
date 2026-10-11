@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:the_radar_grid/main.dart';
+import 'package:the_radar_grid/features/shell/main_spot_shell.dart';
 import 'package:the_radar_grid/features/map/spot_radar_map.dart';
 
 void main() {
