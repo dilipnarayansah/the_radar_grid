@@ -52,6 +52,7 @@ class ExploreFeedScreen extends StatefulWidget {
 class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
+  bool _isRadarCollapsed = false;
 
   final List<String> categories = [
     'All',
@@ -60,12 +61,6 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     'Repairs & AC',
     'Tech & Design',
     'Urgent RFQs',
-  ];
-
-  final List<Map<String, dynamic>> radiusTiers = [
-    {'label': '📍 Walking (1 km)', 'radius': 1.0},
-    {'label': '🏭 Sector Hub (5 km)', 'radius': 5.0},
-    {'label': '🚗 City Scope (15 km)', 'radius': 15.0},
   ];
 
   Future<void> _launchUrlSafe(String urlStr) async {
@@ -105,64 +100,127 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               child: Text(widget.errorMessage!, style: const TextStyle(color: Colors.amberAccent, fontSize: 11)),
             ),
 
-          // Location Selector Header & Mode Toggles
+          // Custom "SPOT" Wordmark Header with Radar Pin Glyph and Alert Icon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(
-                onTap: widget.onOpenLocationSelector,
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Color(0xFF00E5FF), size: 16),
-                    const SizedBox(width: 4),
-                    Text(widget.activeLocation, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, color: Color(0xFF71717A), size: 16),
-                  ],
-                ),
+              Row(
+                children: [
+                  const Icon(Icons.radar, color: Color(0xFF00E5FF), size: 22),
+                  const SizedBox(width: 6),
+                  const Text('S P O T', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 2.5)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(6), border: Border.all(color: const Color(0xFF1E2638))),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Color(0xFF00E5FF), size: 11),
+                        const SizedBox(width: 2),
+                        Text(widget.activeLocation, style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: widget.isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF00E5FF)),
-                    ),
-                    child: GestureDetector(
-                      onTap: () => widget.onToggleJobMode(!widget.isJobBoardMode),
-                      child: Text(
-                        widget.isJobBoardMode ? '📋 RFQ Board' : '⚡ Service Grid',
-                        style: TextStyle(color: widget.isJobBoardMode ? Colors.black : const Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.notifications_active_outlined, color: Color(0xFF00E5FF), size: 20),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Spot Live Radar Alert: 3 nodes active nearby')));
+                    },
+                  ),
+                  GestureDetector(
+                    onTap: widget.onOpenLocationSelector,
+                    child: const Icon(Icons.tune, color: Color(0xFF8E9BAE), size: 20),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // Search Bar & Broadcast Button
+          // Mode Toggle: SERVICES AVAILABLE vs WANTED / RFQs with Animated / Pill Indicator
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10141C),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF1E2638)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => widget.onToggleJobMode(false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: !widget.isJobBoardMode ? const Color(0xFF00E5FF) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'SERVICES AVAILABLE',
+                        style: TextStyle(
+                          color: !widget.isJobBoardMode ? Colors.black : const Color(0xFF8E9BAE),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => widget.onToggleJobMode(true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: widget.isJobBoardMode ? const Color(0xFFFF9F1C) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'WANTED / RFQS',
+                        style: TextStyle(
+                          color: widget.isJobBoardMode ? Colors.black : const Color(0xFF8E9BAE),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Search Bar
           Row(
             children: [
               Expanded(
                 child: Container(
                   height: 46,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10141C),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF1E2638)),
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: Color(0xFF71717A), size: 18),
+                      const Icon(Icons.search, color: Color(0xFF8E9BAE), size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           onChanged: (val) => setState(() => _searchQuery = val),
                           style: const TextStyle(color: Colors.white, fontSize: 13),
                           decoration: const InputDecoration(
-                            hintText: 'Search CNC, welding, electrical, transformers...',
-                            hintStyle: TextStyle(color: Color(0xFF71717A), fontSize: 12),
+                            hintText: 'Search services & RFQs near you...',
+                            hintStyle: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12),
                             border: InputBorder.none,
                             isDense: true,
                           ),
@@ -178,7 +236,10 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 child: Container(
                   height: 46,
                   width: 46,
-                  decoration: BoxDecoration(color: const Color(0xFF00E5FF), borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(
+                    color: widget.isJobBoardMode ? const Color(0xFFFF9F1C) : const Color(0xFF00E5FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: const Icon(Icons.add, color: Colors.black, size: 24),
                 ),
               ),
@@ -186,7 +247,75 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Horizontally Scrollable Category Ribbon
+          // Collapsible Radar Card: Integrated container showing dark radar sweep with live pin markers
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10141C),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF1E2638)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.radar, color: Color(0xFF00E5FF), size: 16),
+                        SizedBox(width: 6),
+                        Text('LIVE P2P RADAR SWEEP', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => setState(() => _isRadarCollapsed = !_isRadarCollapsed),
+                      child: Icon(_isRadarCollapsed ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up, color: const Color(0xFF8E9BAE), size: 18),
+                    ),
+                  ],
+                ),
+                if (!_isRadarCollapsed) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF080B10),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF1E2638)),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Concentric Radar Rings
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.3))),
+                        ),
+                        Container(
+                          width: 116,
+                          height: 116,
+                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.15))),
+                        ),
+                        const Icon(Icons.my_location, color: Color(0xFF00E5FF), size: 18),
+                        // Live pin markers on radar
+                        const Positioned(top: 20, left: 40, child: Icon(Icons.circle, color: Color(0xFF00E5FF), size: 8)),
+                        const Positioned(bottom: 25, right: 50, child: Icon(Icons.circle, color: Color(0xFFFF9F1C), size: 8)),
+                        Positioned(
+                          bottom: 8,
+                          left: 10,
+                          child: Text('${withinRange.length} nodes active within ${widget.radarRadius}km', style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Horizontally Scrollable Category Ribbon with subtle active border
           SizedBox(
             height: 38,
             child: ListView.separated(
@@ -202,14 +331,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF0E272B) : const Color(0xFF14141C),
+                      color: isSelected ? const Color(0xFF0E272B) : const Color(0xFF10141C),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF22222E)),
+                      border: Border.all(color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
                     ),
                     child: Text(
                       cat,
                       style: TextStyle(
-                        color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFFA1A1AA),
+                        color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF8E9BAE),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -226,8 +355,8 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS' : '⚡ SPOT SERVICES AVAILABLE (${withinRange.length})',
-                style: const TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS (${withinRange.length})' : '⚡ SPOT SERVICES AVAILABLE (${withinRange.length})',
+                style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
               ),
             ],
           ),
@@ -236,15 +365,15 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           if (withinRange.isEmpty)
             Container(
               padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
+              decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF1E2638))),
               child: Column(
                 children: [
                   const Text('No active listings in this category. Be the first to post!', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 6),
-                  Text(widget.isJobBoardMode ? 'Post the first job requirement or RFQ to receive competitive quotes.' : 'No commercial services found in this sector. Tap + to broadcast your capabilities.', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
+                  Text(widget.isJobBoardMode ? 'Post the first job requirement or RFQ to receive competitive quotes.' : 'No commercial services found in this sector. Tap + to broadcast your capabilities.', style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 12), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
+                    style: ElevatedButton.styleFrom(backgroundColor: widget.isJobBoardMode ? const Color(0xFFFF9F1C) : const Color(0xFF00E5FF)),
                     onPressed: widget.onOpenBroadcastModal,
                     child: Text(widget.isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
@@ -260,7 +389,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.62,
+                childAspectRatio: 0.58,
               ),
               itemBuilder: (context, index) {
                 final item = withinRange[index];
