@@ -54,6 +54,7 @@ class _MainSpotShellState extends State<MainSpotShell> {
   double _radarRadius = 5.0;
   bool _simpleMode = false;
   bool _showNeedsOnly = false;
+  bool _isJobBoardMode = false;
 
   User? _firebaseUser;
   final Set<String> _bookmarkedIds = {};
@@ -428,7 +429,10 @@ class _MainSpotShellState extends State<MainSpotShell> {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: Firebase.apps.isNotEmpty
-          ? FirebaseFirestore.instance.collection('listings').orderBy('timestamp', descending: true).snapshots()
+          ? FirebaseFirestore.instance
+              .collection(_isJobBoardMode ? 'rfqs' : 'listings')
+              .orderBy('createdAt', descending: true)
+              .snapshots()
           : const Stream.empty(),
       builder: (context, snapshot) {
         List<GridListing> listings = [];
@@ -436,7 +440,10 @@ class _MainSpotShellState extends State<MainSpotShell> {
           if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
             listings = snapshot.data!.docs.map(GridListing.fromFirestore).toList();
           } else {
-            listings = _defaultListings;
+            listings = _defaultListings.where((l) => _isJobBoardMode ? l.type == ListingType.need : l.type != ListingType.need).toList();
+            if (listings.isEmpty) {
+              listings = _defaultListings;
+            }
           }
         } catch (e) {
           debugPrint('Error parsing snapshot: $e');
@@ -456,6 +463,8 @@ class _MainSpotShellState extends State<MainSpotShell> {
             bookmarkedIds: _bookmarkedIds,
             currentUser: _firebaseUser,
             errorMessage: _errorMessage,
+            isJobBoardMode: _isJobBoardMode,
+            onToggleJobMode: (val) => setState(() => _isJobBoardMode = val),
             onRadiusChanged: (r) => setState(() => _radarRadius = r),
             onToggleSimpleMode: () => setState(() => _simpleMode = !_simpleMode),
             onToggleNeeds: (val) => setState(() => _showNeedsOnly = val),
@@ -529,6 +538,8 @@ class ExploreFeedScreen extends StatefulWidget {
   final Set<String> bookmarkedIds;
   final User? currentUser;
   final String? errorMessage;
+  final bool isJobBoardMode;
+  final Function(bool) onToggleJobMode;
   final Function(double) onRadiusChanged;
   final VoidCallback onToggleSimpleMode;
   final Function(bool) onToggleNeeds;
@@ -546,6 +557,8 @@ class ExploreFeedScreen extends StatefulWidget {
     required this.bookmarkedIds,
     required this.currentUser,
     required this.errorMessage,
+    required this.isJobBoardMode,
+    required this.onToggleJobMode,
     required this.onRadiusChanged,
     required this.onToggleSimpleMode,
     required this.onToggleNeeds,
@@ -561,7 +574,6 @@ class ExploreFeedScreen extends StatefulWidget {
 class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
-  bool _isJobBoardMode = false; // Dual-engine: Services Available vs Wanted RFQs
   bool _isMapCollapsed = true; // Collapsible OpenStreetMap radar
 
   final List<String> categories = [
@@ -594,8 +606,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     final titleCtrl = TextEditingController();
     final subCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
-    ListingType selectedType = _isJobBoardMode ? ListingType.need : ListingType.offer;
-    String selectedCat = _isJobBoardMode ? 'Urgent RFQs' : 'Industrial & Fab';
+    final phoneCtrl = TextEditingController(text: widget.currentUser?.phoneNumber ?? '+919876543210');
+    ListingType selectedType = widget.isJobBoardMode ? ListingType.need : ListingType.offer;
+    String selectedCat = widget.isJobBoardMode ? 'Urgent RFQs' : 'Industrial & Fab';
     String conditionTag = 'New';
     bool isVerified = true;
     bool isSaving = false;
@@ -618,7 +631,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_isJobBoardMode ? '📋 Post Client Job / RFQ' : '⚡ Broadcast Commercial Service', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(widget.isJobBoardMode ? '📋 Post Client Job / RFQ' : '⚡ Broadcast Commercial Service', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), foregroundColor: const Color(0xFF00E5FF), side: const BorderSide(color: Color(0xFF00E5FF))),
                     icon: isAiOptimizing ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E5FF))) : const Icon(Icons.auto_awesome, size: 14),
@@ -645,11 +658,29 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: titleCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: _isJobBoardMode ? 'Job Title * (e.g. Need CNC Operator)' : 'Title * (e.g. Industrial Fab & Welding)',
+                  labelText: widget.isJobBoardMode ? 'Job Title * (e.g. Need CNC Operator)' : 'Title * (e.g. Industrial Fab & Welding)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                initialValue: selectedCat,
+                dropdownColor: const Color(0xFF1B1B26),
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Category *',
+                  filled: true,
+                  fillColor: const Color(0xFF1B1B26),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+                items: ['Industrial & Fab', 'Electrical', 'Repairs & AC', 'Tech & Design', 'Urgent RFQs']
+                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) setModalState(() => selectedCat = val);
+                },
               ),
               const SizedBox(height: 10),
               TextField(
@@ -667,7 +698,19 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: priceCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: _isJobBoardMode ? 'Budget Ceiling * (e.g. ₹15,000)' : 'Price / Rate * (e.g. ₹450/hr)',
+                  labelText: widget.isJobBoardMode ? 'Budget Ceiling * (e.g. ₹15,000)' : 'Price / Rate * (e.g. ₹450/hr)',
+                  filled: true,
+                  fillColor: const Color(0xFF1B1B26),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: '10-Digit Mobile Number * (e.g. +919876543210)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -731,6 +774,11 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           setModalState(() => modalError = 'Please enter budget or rate.');
                           return;
                         }
+                        final phoneClean = phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                        if (phoneClean.length < 10) {
+                          setModalState(() => modalError = 'Please enter a valid 10-digit mobile number.');
+                          return;
+                        }
 
                         setModalState(() {
                           isSaving = true;
@@ -759,20 +807,20 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                             id: DateTime.now().millisecondsSinceEpoch.toString(),
                             title: titleCtrl.text.trim(),
                             subtitle: subCtrl.text.trim().isEmpty ? 'Active Commercial Spot Order' : subCtrl.text.trim(),
-                            category: _isJobBoardMode ? 'Urgent RFQs' : selectedCat,
-                            tag: _isJobBoardMode ? '📋 CLIENT RFQ' : '⚡ SPOT PRO',
-                            iconEmoji: _isJobBoardMode ? '📋' : '🏭',
+                            category: selectedCat,
+                            tag: widget.isJobBoardMode ? '📋 CLIENT RFQ' : '⚡ SPOT PRO',
+                            iconEmoji: widget.isJobBoardMode ? '📋' : '🏭',
                             rating: 5.0,
                             reviewsCount: 1,
-                            eta: _isJobBoardMode ? 'Urgent RFQ' : 'Available Now',
+                            eta: widget.isJobBoardMode ? 'Urgent RFQ' : 'Available Now',
                             distanceKm: 0.1,
                             price: priceCtrl.text.trim(),
                             bio: subCtrl.text.trim(),
-                            phone: widget.currentUser?.phoneNumber ?? '+919000000000',
+                            phone: phoneCtrl.text.trim(),
                             sector: widget.activeLocation,
                             latitude: lat,
                             longitude: lng,
-                            type: _isJobBoardMode ? ListingType.need : selectedType,
+                            type: widget.isJobBoardMode ? ListingType.need : selectedType,
                             isBoosted: false,
                             timestamp: DateTime.now(),
                             authorId: authorId,
@@ -782,13 +830,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           );
 
                           if (Firebase.apps.isNotEmpty) {
-                            await FirebaseFirestore.instance.collection('listings').add(newListing.toMap());
+                            final targetCollection = widget.isJobBoardMode ? 'rfqs' : 'listings';
+                            await FirebaseFirestore.instance.collection(targetCollection).add(newListing.toMap());
                           }
 
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(_isJobBoardMode ? '📋 Client Job RFQ posted successfully on Spot!' : '⚡ Commercial listing broadcasted on Spot!')),
+                              SnackBar(content: Text(widget.isJobBoardMode ? '📋 Client Job RFQ posted successfully on Spot!' : '⚡ Commercial listing broadcasted on Spot!')),
                             );
                           }
                         } catch (e) {
@@ -800,7 +849,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       },
                 child: isSaving
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : Text(_isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                    : Text(widget.isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
@@ -813,7 +862,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   Widget build(BuildContext context) {
     final withinRange = widget.listings.where((item) {
       if (item.isSold) return false;
-      final matchesJobMode = _isJobBoardMode ? (item.type == ListingType.need) : (item.type != ListingType.need);
+      final matchesJobMode = widget.isJobBoardMode ? (item.type == ListingType.need) : (item.type != ListingType.need);
       final matchesCategory = _selectedCategory == 'All' ||
           item.category.toLowerCase() == _selectedCategory.toLowerCase() ||
           item.category.toLowerCase().contains(_selectedCategory.toLowerCase());
@@ -944,30 +993,30 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _isJobBoardMode = false),
+                  onTap: () => widget.onToggleJobMode(false),
                   child: Container(
                     height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: !_isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
+                      color: !widget.isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('Services Available', style: TextStyle(color: !_isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('Services Available', style: TextStyle(color: !widget.isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _isJobBoardMode = true),
+                  onTap: () => widget.onToggleJobMode(true),
                   child: Container(
                     height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: _isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
+                      color: widget.isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('Wanted / RFQs', style: TextStyle(color: _isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('Wanted / RFQs', style: TextStyle(color: widget.isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -996,7 +1045,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           onChanged: (val) => setState(() => _searchQuery = val),
                           style: const TextStyle(fontSize: 13, color: Colors.white),
                           decoration: InputDecoration(
-                            hintText: _isJobBoardMode ? "Search RFQs 'CNC', 'Welding', 'Panel'..." : "Search 'Fab', 'Electrical', 'AC'...",
+                            hintText: widget.isJobBoardMode ? "Search RFQs 'CNC', 'Welding', 'Panel'..." : "Search 'Fab', 'Electrical', 'AC'...",
                             hintStyle: const TextStyle(color: Color(0xFF71717A), fontSize: 12),
                             border: InputBorder.none,
                             isDense: true,
@@ -1061,7 +1110,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isJobBoardMode ? '📋 ACTIVE CLIENT RFQS' : '⚡ SPOT SERVICES AVAILABLE (${withinRange.length})',
+                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS' : '⚡ SPOT SERVICES AVAILABLE (${withinRange.length})',
                 style: const TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
               ),
             ],
@@ -1074,14 +1123,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
               child: Column(
                 children: [
-                  Text(_isJobBoardMode ? '📋 No client RFQs posted yet' : '📭 No services found in this area', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  const Text('No active listings in this category. Be the first to post!', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 6),
-                  Text(_isJobBoardMode ? 'Post the first job requirement or RFQ to receive competitive quotes.' : 'No commercial services found in this sector. Tap + to broadcast your capabilities.', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
+                  Text(widget.isJobBoardMode ? 'Post the first job requirement or RFQ to receive competitive quotes.' : 'No commercial services found in this sector. Tap + to broadcast your capabilities.', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
                     onPressed: _openBroadcastModal,
-                    child: Text(_isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(widget.isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
@@ -1101,7 +1150,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 final item = withinRange[index];
                 return SpotListingCard(
                   item: item,
-                  isJobMode: _isJobBoardMode,
+                  isJobMode: widget.isJobBoardMode,
                   onTap: () => widget.onTapCard(item),
                   onChat: () => widget.onOpenChat(item.title),
                   onCall: () => _launchUrlSafe('tel:${item.phone}'),

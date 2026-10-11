@@ -84,6 +84,7 @@ class GridListing {
     'isFavorite': isFavorite,
     'authorId': authorId,
     'isBoosted': isBoosted,
+    'createdAt': FieldValue.serverTimestamp(),
     'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
     'imageUrls': imageUrls,
     'conditionTag': conditionTag,
@@ -95,7 +96,7 @@ class GridListing {
     final typeName = data['type'] as String?;
 
     DateTime? parsedTimestamp;
-    final tsData = data['timestamp'];
+    final tsData = data['createdAt'] ?? data['timestamp'];
     if (tsData is Timestamp) {
       parsedTimestamp = tsData.toDate();
     } else if (tsData is String) {
