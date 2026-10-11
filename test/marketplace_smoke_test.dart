@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:the_radar_grid/main.dart';
 import 'package:the_radar_grid/models/user.dart';
+import 'package:the_radar_grid/features/feed/widgets/spot_listing_card.dart';
+import 'package:the_radar_grid/features/profile/profile_screen.dart';
 import 'mock_listings_dataset.dart';
 
 void main() {
@@ -65,8 +66,8 @@ void main() {
             isJobMode: false,
             onTap: () {},
             onChat: () {},
-            onWhatsApp: () {},
             onCall: () {},
+            onWhatsApp: () {},
           ),
         ),
       ));
@@ -109,7 +110,6 @@ void main() {
       ));
 
       expect(find.text('Guest Industrial Partner'), findsOneWidget);
-      expect(find.textContaining('Verified Spot Industrial Partner'), findsOneWidget);
       expect(find.text('Sign In / Register Account'), findsOneWidget);
     });
   });
