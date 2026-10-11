@@ -35,42 +35,42 @@ void main() {
     });
   });
 
-  group('Marketplace Widget Tests', () {
+  group('Spot Marketplace Widget Tests', () {
     testWidgets('Boosted listings should display the BOOSTED badge', (WidgetTester tester) async {
-      // Find a boosted item from our mock dataset
       final boostedItem = mockListings.firstWhere((l) => l.isBoosted);
 
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: InteractiveCardItem(
+          body: SpotListingCard(
             item: boostedItem,
             isJobMode: false,
             onTap: () {},
             onChat: () {},
+            onCall: () {},
+            onWhatsApp: () {},
           ),
         ),
       ));
 
-      // Verify the badge text is present
       expect(find.text('⚡ BOOSTED'), findsOneWidget);
     });
 
     testWidgets('Non-boosted listings should NOT display the BOOSTED badge', (WidgetTester tester) async {
-      // Find a non-boosted item
       final normalItem = mockListings.firstWhere((l) => !l.isBoosted);
 
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: InteractiveCardItem(
+          body: SpotListingCard(
             item: normalItem,
             isJobMode: false,
             onTap: () {},
             onChat: () {},
+            onWhatsApp: () {},
+            onCall: () {},
           ),
         ),
       ));
 
-      // Verify the badge text is NOT present
       expect(find.text('⚡ BOOSTED'), findsNothing);
     });
 
@@ -80,17 +80,18 @@ void main() {
 
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: InteractiveCardItem(
+          body: SpotListingCard(
             item: item,
             isJobMode: false,
             onTap: () => tapped = true,
             onChat: () {},
+            onCall: () {},
+            onWhatsApp: () {},
           ),
         ),
       ));
 
-      // Tap the card
-      await tester.tap(find.byType(InteractiveCardItem));
+      await tester.tap(find.byType(SpotListingCard));
       await tester.pumpAndSettle();
 
       expect(tapped, isTrue);
@@ -107,8 +108,8 @@ void main() {
         ),
       ));
 
-      expect(find.text('Guest Neighbor'), findsOneWidget);
-      expect(find.textContaining('Verified Merchant Showcase'), findsOneWidget);
+      expect(find.text('Guest Industrial Partner'), findsOneWidget);
+      expect(find.textContaining('Verified Spot Industrial Partner'), findsOneWidget);
       expect(find.text('Sign In / Register Account'), findsOneWidget);
     });
   });

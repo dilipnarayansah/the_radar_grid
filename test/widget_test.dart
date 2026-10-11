@@ -11,14 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:the_radar_grid/main.dart';
 
 void main() {
-  testWidgets('Radar Grid launches and opens the radar map tab', (tester) async {
-    await tester.pumpWidget(const RadarGridApp());
+  testWidgets('Spot launches and opens the map radar tab', (tester) async {
+    await tester.pumpWidget(const SpotApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(MainRadarShell), findsOneWidget);
+    expect(find.byType(MainSpotShell), findsOneWidget);
     expect(find.byType(BottomNavigationBar), findsOneWidget);
 
-    await tester.tap(find.text('Radar Map'));
+    await tester.tap(find.text('Map Radar'));
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(MapRadarView), findsOneWidget);

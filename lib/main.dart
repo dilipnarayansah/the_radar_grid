@@ -17,44 +17,43 @@ import 'package:url_launcher/url_launcher.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const RadarGridApp());
+  runApp(const SpotApp());
 }
 
-class RadarGridApp extends StatelessWidget {
-  const RadarGridApp({super.key});
+class SpotApp extends StatelessWidget {
+  const SpotApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'The Radar Grid - Super-App Master Sprint',
+      title: 'Spot',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF09090D),
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF00E676),
+          primary: Color(0xFF00E5FF), // Spot Cyan Accent
           surface: Color(0xFF14141C),
         ),
       ),
-      home: const MainRadarShell(),
+      home: const MainSpotShell(),
     );
   }
 }
 
 // ---------------- ROOT MOBILE CONTAINER ----------------
-class MainRadarShell extends StatefulWidget {
-  const MainRadarShell({super.key});
+class MainSpotShell extends StatefulWidget {
+  const MainSpotShell({super.key});
 
   @override
-  State<MainRadarShell> createState() => _MainRadarShellState();
+  State<MainSpotShell> createState() => _MainSpotShellState();
 }
 
-class _MainRadarShellState extends State<MainRadarShell> {
+class _MainSpotShellState extends State<MainSpotShell> {
   int _currentIndex = 0;
-  String _activeLocationName = 'Home (Sector 14)';
-  double _radarRadius = 3.0;
+  String _activeLocationName = 'Sector 14 Industrial Hub';
+  double _radarRadius = 5.0;
   bool _simpleMode = false;
   bool _showNeedsOnly = false;
-  bool _lateNightSOS = false;
 
   User? _firebaseUser;
   final Set<String> _bookmarkedIds = {};
@@ -65,106 +64,82 @@ class _MainRadarShellState extends State<MainRadarShell> {
   final List<GridListing> _defaultListings = [
     GridListing(
       id: '1',
-      title: 'Rohan Tech Lab',
-      subtitle: 'Laptop OS, Linux & Python Fix',
-      category: 'Tech',
-      tag: 'FREE CONSULT',
-      iconEmoji: '💻',
+      title: 'Apex Industrial Fab & Welding',
+      subtitle: 'Heavy Machinery & Steel Fabrication',
+      category: 'Industrial & Fab',
+      tag: 'VERIFIED PRO',
+      iconEmoji: '🏭',
       rating: 4.9,
-      reviewsCount: 34,
-      eta: '10-15 mins',
-      distanceKm: 0.4,
-      price: '₹150/hr',
-      bio: 'On-spot Linux setup, Windows recovery, and Python bug fixing within the walking block. 50+ students helped.',
+      reviewsCount: 42,
+      eta: 'Available Today',
+      distanceKm: 0.8,
+      price: '₹450/hr',
+      bio: 'Precision laser cutting, MIG/TIG welding, and industrial fabrication for plant extensions and repairs.',
       phone: '+919876543210',
-      sector: 'Walking Block A',
+      sector: 'Sector 14 Industrial Zone',
       type: ListingType.offer,
-      statusText: '🟢 Responding in 2m',
+      statusText: '• Online Now',
       latitude: 28.6139,
       longitude: 77.2090,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      authorId: 'rohan_123',
-      conditionTag: 'Refurbished',
+      timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
+      authorId: 'apex_fab',
+      conditionTag: 'New',
       isVerified: true,
       imageUrls: [
-        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500',
-        'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500',
+        'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500',
+        'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500',
       ],
     ),
     GridListing(
       id: '2',
-      title: 'Amit Mobile Care',
-      subtitle: 'Screen & Battery Repair',
-      category: 'Repairs',
-      tag: 'SAME DAY FIX',
-      iconEmoji: '📱',
+      title: 'Voltaic Electrical & Panel Rewiring',
+      subtitle: 'Commercial 3-Phase & Control Panels',
+      category: 'Electrical',
+      tag: 'URGENT RESPONSE',
+      iconEmoji: '⚡',
       rating: 4.8,
-      reviewsCount: 89,
-      eta: '20-25 mins',
-      distanceKm: 0.9,
-      price: 'From ₹200',
-      bio: 'Original display replacements, battery swaps, and water damage recovery done in front of you.',
+      reviewsCount: 76,
+      eta: '15 mins',
+      distanceKm: 1.4,
+      price: '₹300/hr',
+      bio: 'Licensed electrical contractors for industrial panel wiring, transformer maintenance, and safety audits.',
       phone: '+919811122334',
-      sector: 'Main Market Block',
+      sector: 'Main Commercial Block',
       type: ListingType.offer,
+      statusText: '• Active 5m ago',
       latitude: 28.6150,
       longitude: 77.2100,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      authorId: 'amit_456',
+      timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
+      authorId: 'voltaic_elec',
       conditionTag: 'New',
       isVerified: true,
       imageUrls: [
-        'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
+        'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500',
       ],
     ),
     GridListing(
       id: '3',
-      title: 'Campus Notes & Printout SOS',
-      subtitle: 'Need 15-page color printout',
-      category: 'Bounty',
-      tag: 'BOUNTY ₹80',
-      iconEmoji: '🖨️',
+      title: 'Need CNC Milling Operator for 500 Pcs',
+      subtitle: 'Urgent batch order for aluminum housings',
+      category: 'Urgent RFQs',
+      tag: 'RFQ WANDED',
+      iconEmoji: '📋',
       rating: 5.0,
-      reviewsCount: 14,
-      eta: 'Urgent',
-      distanceKm: 0.6,
-      price: '₹80 Bounty',
-      bio: 'Need urgent color prints for tomorrow morning submission. Will collect from your hostel/block.',
+      reviewsCount: 19,
+      eta: 'Immediate RFQ',
+      distanceKm: 2.1,
+      price: '₹25,000 Budget',
+      bio: 'Seeking certified CNC workshop to manufacture 500 precision aluminum enclosure parts within 5 days.',
       phone: '+919899911223',
-      sector: 'Hostel Block 3',
+      sector: 'Phase 2 Industrial Estate',
       type: ListingType.need,
+      statusText: '• Online Now',
       latitude: 28.6120,
       longitude: 77.2080,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
-      authorId: 'student_789',
-      conditionTag: 'Used',
-      isVerified: false,
-    ),
-    GridListing(
-      id: '4',
-      title: 'Bosch Impact Drill & Kit',
-      subtitle: '1-Day Home Tool Lending',
-      category: 'Tools',
-      tag: 'RENT / BORROW',
-      iconEmoji: '🛠️',
-      rating: 4.9,
-      reviewsCount: 28,
-      eta: 'Available',
-      distanceKm: 1.1,
-      price: '₹50/day',
-      bio: 'Complete drilling kit with wall plugs and bits. Clean condition, pickup from Sector 14 Gate 2.',
-      phone: '+919777788990',
-      sector: 'Pocket C Sector 14',
-      type: ListingType.tool,
-      latitude: 28.6160,
-      longitude: 77.2120,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      authorId: 'tool_depot',
-      conditionTag: 'Used',
+      timestamp: DateTime.now().subtract(const Duration(minutes: 40)),
+      authorId: 'client_rfq_1',
+      conditionTag: 'New',
       isVerified: true,
-      imageUrls: [
-        'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500',
-      ],
     ),
   ];
 
@@ -256,16 +231,16 @@ class _MainRadarShellState extends State<MainRadarShell> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📍 Switch Neighborhood Radar Grid', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text('📍 Switch Spot Industrial Sector', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 14),
             ListTile(
               tileColor: const Color(0xFF1B1B26),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const Icon(Icons.my_location, color: Color(0xFF00E676)),
-              title: const Text('📍 Current Live GPS (Home)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Active Sector 14 Perimeter (Fuzzy Offset Active)', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+              leading: const Icon(Icons.factory, color: Color(0xFF00E5FF)),
+              title: const Text('🏭 Sector 14 Industrial Hub', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              subtitle: const Text('Active Fab, CNC & Electrical Grid', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
               onTap: () {
-                setState(() => _activeLocationName = 'Home (Sector 14)');
+                setState(() => _activeLocationName = 'Sector 14 Industrial Hub');
                 Navigator.pop(ctx);
               },
             ),
@@ -273,11 +248,11 @@ class _MainRadarShellState extends State<MainRadarShell> {
             ListTile(
               tileColor: const Color(0xFF1B1B26),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const Icon(Icons.school, color: Color(0xFF00E676)),
-              title: const Text('🎓 Campus & Student Grid', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Hostels, Tech Labs, Gaming Rooms & Canteen', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+              leading: const Icon(Icons.apartment, color: Color(0xFF00E5FF)),
+              title: const Text('🏢 Phase 2 Commercial Tech Park', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              subtitle: const Text('Software, Hardware & RFQ Hub', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
               onTap: () {
-                setState(() => _activeLocationName = 'University Campus Grid');
+                setState(() => _activeLocationName = 'Phase 2 Commercial Tech Park');
                 Navigator.pop(ctx);
               },
             ),
@@ -290,7 +265,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   void _openChat(BuildContext context, String providerName) {
     if (!_chats.containsKey(providerName)) {
       _chats[providerName] = [
-        ChatMessage(sender: providerName, text: 'Hi! How can I help you today in the local grid?', time: 'Just now', isMe: false),
+        ChatMessage(sender: providerName, text: 'Hi! Ready to discuss your Spot commercial requirement.', time: 'Just now', isMe: false),
       ];
     }
     Navigator.push(
@@ -335,7 +310,6 @@ class _MainRadarShellState extends State<MainRadarShell> {
             children: [
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2B2B38), borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 18),
-              // Instagram-Style Swipeable Image Carousel
               if (item.imageUrls.isNotEmpty)
                 SizedBox(
                   height: 180,
@@ -370,24 +344,30 @@ class _MainRadarShellState extends State<MainRadarShell> {
                             Flexible(child: Text(item.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
                             if (item.isVerified) ...[
                               const SizedBox(width: 4),
-                              const Icon(Icons.verified, color: Color(0xFF00E676), size: 16),
+                              const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 16),
                             ],
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
+                        Row(
+                          children: [
+                            Text(item.statusText, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.w600)),
+                            const Text(' • ', style: TextStyle(color: Color(0xFF71717A))),
+                            Text('${item.distanceKm.toStringAsFixed(1)} km away', style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: const Color(0xFF00E676), borderRadius: BorderRadius.circular(6)),
+                              decoration: BoxDecoration(color: const Color(0xFF00E5FF), borderRadius: BorderRadius.circular(6)),
                               child: Text('★ ${item.rating.toStringAsFixed(1)}', style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
                             ),
                             const SizedBox(width: 6),
                             Text('(${item.reviewsCount} reviews)', style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
                             const Spacer(),
-                            Text(item.price, style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(item.price, style: const TextStyle(color: Color(0xFF00E5FF), fontWeight: FontWeight.bold, fontSize: 16)),
                           ],
                         ),
                       ],
@@ -396,41 +376,47 @@ class _MainRadarShellState extends State<MainRadarShell> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Direct WhatsApp & Voice Calling Bridge
+              // Direct WhatsApp & Phone Bridge + Primary Negotiate Button
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366), minimumSize: const Size.fromHeight(44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      icon: const Icon(Icons.chat, color: Colors.white, size: 18),
-                      label: const Text('WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                      onPressed: () => _launchUrlSafe('https://wa.me/${item.phone.replaceAll(RegExp(r'[^0-9]'), '')}?text=Hi, inquiring about your Radar Grid listing: ${item.title}'),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF), minimumSize: const Size.fromHeight(46), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _openChat(context, item.title);
+                      },
+                      child: Text(item.type == ListingType.need ? 'Send Quote / Bid' : 'Negotiate / Bid', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), minimumSize: const Size.fromHeight(44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), side: const BorderSide(color: Color(0xFF00E676))),
-                      icon: const Icon(Icons.phone, color: Color(0xFF00E676), size: 18),
-                      label: const Text('Call Now', style: TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 46,
+                    width: 46,
+                    decoration: BoxDecoration(color: const Color(0xFF25D366), borderRadius: BorderRadius.circular(12)),
+                    child: IconButton(
+                      icon: const Icon(Icons.chat, color: Colors.white, size: 20),
+                      tooltip: 'WhatsApp',
+                      onPressed: () => _launchUrlSafe('https://wa.me/${item.phone.replaceAll(RegExp(r'[^0-9]'), '')}?text=Hi, inquiring about your Spot listing: ${item.title}'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 46,
+                    width: 46,
+                    decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF00E5FF))),
+                    child: IconButton(
+                      icon: const Icon(Icons.phone, color: Color(0xFF00E5FF), size: 20),
+                      tooltip: 'Call Now',
                       onPressed: () => _launchUrlSafe('tel:${item.phone}'),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              const Text('ABOUT COMMERCIAL LISTING', style: TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+              const SizedBox(height: 14),
+              const Text('ABOUT SPOT LISTING', style: TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
               const SizedBox(height: 6),
               Text(item.bio, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676), minimumSize: const Size.fromHeight(48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _openChat(context, item.title);
-                },
-                child: const Text('Open Negotiation & Inquiry Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
-              ),
             ],
           ),
         ),
@@ -455,7 +441,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
         } catch (e) {
           debugPrint('Error parsing snapshot: $e');
           listings = _defaultListings;
-          _errorMessage = 'Network warning: displaying cached grid nodes.';
+          _errorMessage = 'Network warning: displaying cached Spot grid nodes.';
         }
 
         listings = listings.where((l) => !(_blockedUserIds.contains(l.authorId)) && l.distanceKm <= _radarRadius).toList();
@@ -467,14 +453,12 @@ class _MainRadarShellState extends State<MainRadarShell> {
             radarRadius: _radarRadius,
             simpleMode: _simpleMode,
             showNeedsOnly: _showNeedsOnly,
-            lateNightSOS: _lateNightSOS,
             bookmarkedIds: _bookmarkedIds,
             currentUser: _firebaseUser,
             errorMessage: _errorMessage,
             onRadiusChanged: (r) => setState(() => _radarRadius = r),
             onToggleSimpleMode: () => setState(() => _simpleMode = !_simpleMode),
             onToggleNeeds: (val) => setState(() => _showNeedsOnly = val),
-            onToggleNightSOS: (val) => setState(() => _lateNightSOS = val),
             onOpenLocationSelector: _openLocationSelector,
             onOpenChat: (name) => _openChat(context, name),
             onTapCard: (item) => _showListingDetails(context, item),
@@ -513,14 +497,14 @@ class _MainRadarShellState extends State<MainRadarShell> {
                     currentIndex: _currentIndex,
                     onTap: (idx) => setState(() => _currentIndex = idx),
                     backgroundColor: const Color(0xFF0D0D12),
-                    selectedItemColor: const Color(0xFF00E676),
+                    selectedItemColor: const Color(0xFF00E5FF),
                     unselectedItemColor: const Color(0xFF71717A),
                     type: BottomNavigationBarType.fixed,
                     selectedFontSize: 11,
                     unselectedFontSize: 11,
                     items: const [
                       BottomNavigationBarItem(icon: Icon(Icons.bolt), label: 'Explore'),
-                      BottomNavigationBarItem(icon: Icon(Icons.radar), label: 'Radar Map'),
+                      BottomNavigationBarItem(icon: Icon(Icons.radar), label: 'Map Radar'),
                       BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
                       BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
                     ],
@@ -535,21 +519,19 @@ class _MainRadarShellState extends State<MainRadarShell> {
   }
 }
 
-// ---------------- TAB 1: EXPLORE FEED WITH DUAL-MODE JOB / ITEM TOGGLE & AI COPILOT ----------------
+// ---------------- TAB 1: EXPLORE FEED WITH COLLAPSIBLE MAP & CATEGORY RIBBON ----------------
 class ExploreFeedScreen extends StatefulWidget {
   final List<GridListing> listings;
   final String activeLocation;
   final double radarRadius;
   final bool simpleMode;
   final bool showNeedsOnly;
-  final bool lateNightSOS;
   final Set<String> bookmarkedIds;
   final User? currentUser;
   final String? errorMessage;
   final Function(double) onRadiusChanged;
   final VoidCallback onToggleSimpleMode;
   final Function(bool) onToggleNeeds;
-  final Function(bool) onToggleNightSOS;
   final VoidCallback onOpenLocationSelector;
   final Function(String) onOpenChat;
   final Function(GridListing) onTapCard;
@@ -561,14 +543,12 @@ class ExploreFeedScreen extends StatefulWidget {
     required this.radarRadius,
     required this.simpleMode,
     required this.showNeedsOnly,
-    required this.lateNightSOS,
     required this.bookmarkedIds,
     required this.currentUser,
     required this.errorMessage,
     required this.onRadiusChanged,
     required this.onToggleSimpleMode,
     required this.onToggleNeeds,
-    required this.onToggleNightSOS,
     required this.onOpenLocationSelector,
     required this.onOpenChat,
     required this.onTapCard,
@@ -579,36 +559,45 @@ class ExploreFeedScreen extends StatefulWidget {
 }
 
 class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
-  int _selectedCat = 0;
+  String _selectedCategory = 'All';
   String _searchQuery = '';
-  bool _isJobBoardMode = false; // Dual-mode feed toggle
+  bool _isJobBoardMode = false; // Dual-engine: Services Available vs Wanted RFQs
+  bool _isMapCollapsed = true; // Collapsible OpenStreetMap radar
 
-  final List<Map<String, String>> categories = [
-    {'name': 'All', 'emoji': '⚡'},
-    {'name': 'Tech', 'emoji': '💻'},
-    {'name': 'Tools', 'emoji': '🛠️'},
-    {'name': 'Vehicles', 'emoji': '🚗'},
-    {'name': 'Services', 'emoji': '🔧'},
-    {'name': 'Bounty', 'emoji': '💸'},
-    {'name': 'Home Food', 'emoji': '🍲'},
-    {'name': 'Repairs', 'emoji': '📱'},
+  final List<String> categories = [
+    'All',
+    'Industrial & Fab',
+    'Electrical',
+    'Repairs & AC',
+    'Tech & Design',
+    'Urgent RFQs',
   ];
 
   final List<Map<String, dynamic>> radiusTiers = [
     {'label': '📍 Walking (1 km)', 'radius': 1.0},
-    {'label': '🚲 Sector / Campus (3 km)', 'radius': 3.0},
+    {'label': '🏭 Sector Hub (5 km)', 'radius': 5.0},
     {'label': '🚗 City Scope (15 km)', 'radius': 15.0},
   ];
+
+  Future<void> _launchUrlSafe(String urlStr) async {
+    try {
+      final uri = Uri.parse(urlStr);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Launch error: $e');
+    }
+  }
 
   void _openBroadcastModal() {
     final titleCtrl = TextEditingController();
     final subCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
     ListingType selectedType = _isJobBoardMode ? ListingType.need : ListingType.offer;
-    String selectedCat = _isJobBoardMode ? 'Bounty' : 'Tech';
-    String conditionTag = 'Used';
+    String selectedCat = _isJobBoardMode ? 'Urgent RFQs' : 'Industrial & Fab';
+    String conditionTag = 'New';
     bool isVerified = true;
-    bool isBoosted = false;
     bool isSaving = false;
     bool isAiOptimizing = false;
     String? modalError;
@@ -629,11 +618,10 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_isJobBoardMode ? '📋 Post Client Job / RFQ' : '⚡ Broadcast Commercial Listing', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  // AI Optimize Button
+                  Text(_isJobBoardMode ? '📋 Post Client Job / RFQ' : '⚡ Broadcast Commercial Service', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), foregroundColor: const Color(0xFF00E676), side: const BorderSide(color: Color(0xFF00E676))),
-                    icon: isAiOptimizing ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E676))) : const Icon(Icons.auto_awesome, size: 14),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), foregroundColor: const Color(0xFF00E5FF), side: const BorderSide(color: Color(0xFF00E5FF))),
+                    icon: isAiOptimizing ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E5FF))) : const Icon(Icons.auto_awesome, size: 14),
                     label: const Text('AI Optimize', style: TextStyle(fontSize: 11)),
                     onPressed: isAiOptimizing
                         ? null
@@ -657,7 +645,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: titleCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: _isJobBoardMode ? 'Job Title * (e.g. Need Python Bot Scraper)' : 'Title * (e.g. Sony 4K Camera Rig)',
+                  labelText: _isJobBoardMode ? 'Job Title * (e.g. Need CNC Operator)' : 'Title * (e.g. Industrial Fab & Welding)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -668,7 +656,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: subCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Scope Description / AI Optimized Pitch',
+                  labelText: 'Scope Description / AI Pitch',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -679,7 +667,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: priceCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: _isJobBoardMode ? 'Budget Ceiling * (e.g. ₹2000)' : 'Price / Bounty * (e.g. ₹500, Free)',
+                  labelText: _isJobBoardMode ? 'Budget Ceiling * (e.g. ₹15,000)' : 'Price / Rate * (e.g. ₹450/hr)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -688,13 +676,13 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               const SizedBox(height: 10),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF00E676),
-                  side: const BorderSide(color: Color(0xFF00E676)),
+                  foregroundColor: const Color(0xFF00E5FF),
+                  side: const BorderSide(color: Color(0xFF00E5FF)),
                   minimumSize: const Size.fromHeight(40),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.cloud_upload, size: 16),
-                label: Text(pickedImagePath != null ? '✅ Image Uploaded via Cloudinary CDN' : '☁️ Upload Photo to Free Cloudinary CDN'),
+                label: Text(pickedImagePath != null ? '✅ Image Uploaded via Cloudinary CDN' : '☁️ Upload Photo to Cloudinary CDN'),
                 onPressed: () async {
                   try {
                     final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -718,17 +706,17 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               ],
               const SizedBox(height: 12),
               SwitchListTile(
-                title: const Text('🛡️ Verified Commercial Badge', style: TextStyle(fontSize: 13, color: Colors.white)),
-                subtitle: const Text('Display blue verified checkmark', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+                title: const Text('🛡️ Verified Commercial Status', style: TextStyle(fontSize: 13, color: Colors.white)),
+                subtitle: const Text('Display cyan verified checkmark badge', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
                 value: isVerified,
-                activeThumbColor: const Color(0xFF00E676),
+                activeThumbColor: const Color(0xFF00E5FF),
                 contentPadding: EdgeInsets.zero,
                 onChanged: (val) => setModalState(() => isVerified = val),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00E676),
+                  backgroundColor: const Color(0xFF00E5FF),
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -740,7 +728,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           return;
                         }
                         if (priceCtrl.text.trim().isEmpty) {
-                          setModalState(() => modalError = 'Please enter budget or pricing.');
+                          setModalState(() => modalError = 'Please enter budget or rate.');
                           return;
                         }
 
@@ -764,16 +752,16 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
                           final authorId = widget.currentUser?.uid ?? 'guest_uid';
                           final imageUrls = pickedImagePath != null
-                              ? [pickedImagePath!, 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500']
-                              : ['https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500'];
+                              ? [pickedImagePath!, 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500']
+                              : ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500'];
 
                           final newListing = GridListing(
                             id: DateTime.now().millisecondsSinceEpoch.toString(),
                             title: titleCtrl.text.trim(),
-                            subtitle: subCtrl.text.trim().isEmpty ? 'Active Neighborhood Order' : subCtrl.text.trim(),
-                            category: _isJobBoardMode ? 'Bounty' : selectedCat,
-                            tag: _isJobBoardMode ? '📋 RFQ JOB' : '⚡ NEW SIGNAL',
-                            iconEmoji: _isJobBoardMode ? '📋' : '⚡',
+                            subtitle: subCtrl.text.trim().isEmpty ? 'Active Commercial Spot Order' : subCtrl.text.trim(),
+                            category: _isJobBoardMode ? 'Urgent RFQs' : selectedCat,
+                            tag: _isJobBoardMode ? '📋 CLIENT RFQ' : '⚡ SPOT PRO',
+                            iconEmoji: _isJobBoardMode ? '📋' : '🏭',
                             rating: 5.0,
                             reviewsCount: 1,
                             eta: _isJobBoardMode ? 'Urgent RFQ' : 'Available Now',
@@ -785,7 +773,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                             latitude: lat,
                             longitude: lng,
                             type: _isJobBoardMode ? ListingType.need : selectedType,
-                            isBoosted: isBoosted,
+                            isBoosted: false,
                             timestamp: DateTime.now(),
                             authorId: authorId,
                             conditionTag: conditionTag,
@@ -800,7 +788,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(_isJobBoardMode ? '📋 Job RFQ posted successfully!' : '⚡ Commercial listing broadcast successfully!')),
+                              SnackBar(content: Text(_isJobBoardMode ? '📋 Client Job RFQ posted successfully on Spot!' : '⚡ Commercial listing broadcasted on Spot!')),
                             );
                           }
                         } catch (e) {
@@ -812,7 +800,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       },
                 child: isSaving
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : Text(_isJobBoardMode ? 'Post Job RFQ to Grid' : 'Post Enterprise Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                    : Text(_isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
@@ -823,14 +811,12 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeCatName = categories[_selectedCat]['name'];
-
     final withinRange = widget.listings.where((item) {
       if (item.isSold) return false;
       final matchesJobMode = _isJobBoardMode ? (item.type == ListingType.need) : (item.type != ListingType.need);
-      final matchesCategory = _selectedCat == 0 ||
-          item.category.toLowerCase() == activeCatName!.toLowerCase() ||
-          item.category.toLowerCase().contains(activeCatName.toLowerCase());
+      final matchesCategory = _selectedCategory == 'All' ||
+          item.category.toLowerCase() == _selectedCategory.toLowerCase() ||
+          item.category.toLowerCase().contains(_selectedCategory.toLowerCase());
       final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesJobMode && matchesCategory && matchesSearch;
@@ -849,76 +835,124 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             ),
           ],
 
-          // Top Bar with Location, Simple Mode & Active Count
+          // Top Navigation Bar with "SPOT" Wordmark & Cyan Radar Pulse Icon
           Row(
             children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onOpenLocationSelector,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              const Icon(Icons.radar, color: Color(0xFF00E5FF), size: 24),
+              const SizedBox(width: 8),
+              const Text('SPOT', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.5)),
+              const Spacer(),
+              GestureDetector(
+                onTap: widget.onOpenLocationSelector,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF22222E))),
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          const Text('📍', style: TextStyle(fontSize: 14)),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(widget.activeLocation, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text('▼', style: TextStyle(fontSize: 10, color: Color(0xFF00E676))),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text('Active Perimeter: ${widget.radarRadius.toStringAsFixed(0)} km (Fuzzy GPS)', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                      const Text('📍', style: TextStyle(fontSize: 12)),
+                      const SizedBox(width: 4),
+                      Text(widget.activeLocation, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 4),
+                      const Text('▼', style: TextStyle(fontSize: 9, color: Color(0xFF00E5FF))),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(widget.simpleMode ? Icons.view_agenda : Icons.grid_view, color: const Color(0xFF00E676), size: 20),
-                    tooltip: 'Toggle Simple Mode',
-                    onPressed: widget.onToggleSimpleMode,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F2417),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.4)),
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(radius: 3.5, backgroundColor: Color(0xFF00E676)),
-                        const SizedBox(width: 5),
-                        Text('${withinRange.length} NODES', style: const TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-                      ],
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
           const SizedBox(height: 14),
 
-          // Master Super-App Switcher: Available Services vs Client Jobs & RFQs
+          // Collapsible OpenStreetMap Radar Widget
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF14141C),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF22222E)),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.map, color: Color(0xFF00E5FF), size: 16),
+                          const SizedBox(width: 6),
+                          Text('SPOT MAP RADAR (${widget.radarRadius.toStringAsFixed(0)} KM)', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _isMapCollapsed = !_isMapCollapsed),
+                        child: Text(_isMapCollapsed ? 'Expand Map ▼' : 'Collapse ▲', style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  height: _isMapCollapsed ? 0 : 200,
+                  child: _isMapCollapsed
+                      ? const SizedBox.shrink()
+                      : ClipRRect(
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                          child: FlutterMap(
+                            options: const MapOptions(
+                              initialCenter: LatLng(28.6139, 77.2090),
+                              initialZoom: 13.0,
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'io.spotapp.industrial',
+                              ),
+                              MarkerLayer(
+                                markers: withinRange.map((item) {
+                                  final lat = item.latitude ?? 28.6139;
+                                  final lng = item.longitude ?? 77.2090;
+                                  return Marker(
+                                    point: LatLng(lat, lng),
+                                    width: 44,
+                                    height: 44,
+                                    child: GestureDetector(
+                                      onTap: () => widget.onTapCard(item),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF14141C),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: const Color(0xFF00E5FF), width: 2),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(item.iconEmoji, style: const TextStyle(fontSize: 16)),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Dual-Engine Marketplace Segmented Tab Controller
           Row(
             children: [
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _isJobBoardMode = false),
                   child: Container(
-                    height: 36,
+                    height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: !_isJobBoardMode ? const Color(0xFF00E676) : const Color(0xFF14141C),
+                      color: !_isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('⚡ Services & Items', style: TextStyle(color: !_isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('Services Available', style: TextStyle(color: !_isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -927,13 +961,13 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 child: GestureDetector(
                   onTap: () => setState(() => _isJobBoardMode = true),
                   child: Container(
-                    height: 36,
+                    height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: _isJobBoardMode ? const Color(0xFF00E676) : const Color(0xFF14141C),
+                      color: _isJobBoardMode ? const Color(0xFF00E5FF) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('📋 Client Jobs & RFQs', style: TextStyle(color: _isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('Wanted / RFQs', style: TextStyle(color: _isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -941,12 +975,12 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Search Field + Broadcast / Post Job Button
+          // Search Field + Post RFQ Button
           Row(
             children: [
               Expanded(
                 child: Container(
-                  height: 48,
+                  height: 46,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     color: const Color(0xFF14141C),
@@ -962,7 +996,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           onChanged: (val) => setState(() => _searchQuery = val),
                           style: const TextStyle(fontSize: 13, color: Colors.white),
                           decoration: InputDecoration(
-                            hintText: _isJobBoardMode ? "Search jobs 'bot', 'python', 'repair'..." : "Search 'drone', 'drill', 'tutor'...",
+                            hintText: _isJobBoardMode ? "Search RFQs 'CNC', 'Welding', 'Panel'..." : "Search 'Fab', 'Electrical', 'AC'...",
                             hintStyle: const TextStyle(color: Color(0xFF71717A), fontSize: 12),
                             border: InputBorder.none,
                             isDense: true,
@@ -977,40 +1011,40 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               GestureDetector(
                 onTap: _openBroadcastModal,
                 child: Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(color: const Color(0xFF00E676), borderRadius: BorderRadius.circular(14)),
-                  child: const Icon(Icons.add, color: Colors.black, size: 26),
+                  height: 46,
+                  width: 46,
+                  decoration: BoxDecoration(color: const Color(0xFF00E5FF), borderRadius: BorderRadius.circular(14)),
+                  child: const Icon(Icons.add, color: Colors.black, size: 24),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
 
-          // Macro-Zoom Radius Tiers
+          // Horizontally Scrollable Category Ribbon
           SizedBox(
-            height: 32,
+            height: 38,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: radiusTiers.length,
+              itemCount: categories.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final tier = radiusTiers[index];
-                final isSelected = widget.radarRadius == tier['radius'];
+                final cat = categories[index];
+                final isSelected = _selectedCategory == cat;
                 return GestureDetector(
-                  onTap: () => widget.onRadiusChanged(tier['radius']),
+                  onTap: () => setState(() => _selectedCategory = cat),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF0E2719) : const Color(0xFF14141C),
+                      color: isSelected ? const Color(0xFF0E272B) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: isSelected ? const Color(0xFF00E676) : const Color(0xFF22222E)),
+                      border: Border.all(color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF22222E)),
                     ),
                     child: Text(
-                      tier['label'],
+                      cat,
                       style: TextStyle(
-                        color: isSelected ? const Color(0xFF00E676) : const Color(0xFFA1A1AA),
+                        color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFFA1A1AA),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1020,54 +1054,17 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               },
             ),
           ),
-          const SizedBox(height: 14),
-
-          // Interactive Categories Bar
-          SizedBox(
-            height: 78,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
-              itemBuilder: (context, index) {
-                final cat = categories[index];
-                final isSelected = _selectedCat == index;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedCat = index),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected ? const Color(0xFF00E676) : const Color(0xFF171720),
-                          border: Border.all(color: isSelected ? const Color(0xFF00E676) : const Color(0xFF242432)),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(cat['emoji']!, style: TextStyle(fontSize: 20, color: isSelected ? Colors.black : Colors.white)),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        cat['name']!,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF8E8E9A),
-                          fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
           const SizedBox(height: 16),
 
-          // Active Feed Section Header
-          Text(
-            _isJobBoardMode ? '📋 ACTIVE CLIENT JOBS & RFQS' : 'WITHIN YOUR ${widget.radarRadius.toStringAsFixed(0)} KM SCOPE',
-            style: const TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+          // Feed Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _isJobBoardMode ? '📋 ACTIVE CLIENT RFQS' : '⚡ SPOT SERVICES AVAILABLE (${withinRange.length})',
+                style: const TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
 
@@ -1077,48 +1074,17 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
               child: Column(
                 children: [
-                  Text(_isJobBoardMode ? '📋 No client jobs posted yet' : '📭 No items found in this area', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  Text(_isJobBoardMode ? '📋 No client RFQs posted yet' : '📭 No services found in this area', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  Text(_isJobBoardMode ? 'Post the first client RFQ or job requirement to receive quotes from nearby providers.' : 'No items found in this area - Post the first listing to spark your local neighborhood grid.', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
+                  Text(_isJobBoardMode ? 'Post the first job requirement or RFQ to receive competitive quotes.' : 'No commercial services found in this sector. Tap + to broadcast your capabilities.', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
                     onPressed: _openBroadcastModal,
-                    child: Text(_isJobBoardMode ? 'Post Client Job Now' : 'Post the First Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(_isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
-            )
-          else if (widget.simpleMode)
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: withinRange.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final item = withinRange[index];
-                return ListTile(
-                  tileColor: const Color(0xFF14141C),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  leading: Text(item.iconEmoji, style: const TextStyle(fontSize: 32)),
-                  title: Row(
-                    children: [
-                      Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      if (item.isVerified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.verified, color: Color(0xFF00E676), size: 14),
-                      ],
-                    ],
-                  ),
-                  subtitle: Text('${item.subtitle} • ${item.distanceKm.toStringAsFixed(1)} km away', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
-                  trailing: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
-                    onPressed: () => widget.onOpenChat(item.title),
-                    child: Text(_isJobBoardMode ? 'Submit Quote' : 'View', style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                  onTap: () => widget.onTapCard(item),
-                );
-              },
             )
           else
             GridView.builder(
@@ -1129,15 +1095,17 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.64,
+                childAspectRatio: 0.62,
               ),
               itemBuilder: (context, index) {
                 final item = withinRange[index];
-                return InteractiveCardItem(
+                return SpotListingCard(
                   item: item,
                   isJobMode: _isJobBoardMode,
                   onTap: () => widget.onTapCard(item),
                   onChat: () => widget.onOpenChat(item.title),
+                  onCall: () => _launchUrlSafe('tel:${item.phone}'),
+                  onWhatsApp: () => _launchUrlSafe('https://wa.me/${item.phone.replaceAll(RegExp(r'[^0-9]'), '')}?text=Hi, inquiring about your Spot listing: ${item.title}'),
                 );
               },
             ),
@@ -1147,20 +1115,30 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   }
 }
 
-// ---------------- INTERACTIVE CARD ITEM WITH RFQ QUOTE & SHOWCASE ----------------
-class InteractiveCardItem extends StatefulWidget {
+// ---------------- RESTRUCTURED SPOT LISTING CARD WITH DUAL ACTIONS ----------------
+class SpotListingCard extends StatefulWidget {
   final GridListing item;
   final bool isJobMode;
   final VoidCallback onTap;
   final VoidCallback onChat;
+  final VoidCallback onCall;
+  final VoidCallback onWhatsApp;
 
-  const InteractiveCardItem({super.key, required this.item, required this.isJobMode, required this.onTap, required this.onChat});
+  const SpotListingCard({
+    super.key,
+    required this.item,
+    required this.isJobMode,
+    required this.onTap,
+    required this.onChat,
+    required this.onCall,
+    required this.onWhatsApp,
+  });
 
   @override
-  State<InteractiveCardItem> createState() => _InteractiveCardItemState();
+  State<SpotListingCard> createState() => _SpotListingCardState();
 }
 
-class _InteractiveCardItemState extends State<InteractiveCardItem> {
+class _SpotListingCardState extends State<SpotListingCard> {
   bool _isPressed = false;
 
   @override
@@ -1190,17 +1168,12 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(color: const Color(0xFF09090D), borderRadius: BorderRadius.circular(6)),
-                      child: Text(item.isBoosted ? '⚡ BOOSTED' : item.tag, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
-                    ),
+                    child: Text(item.statusText, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 9, fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(width: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(4)),
-                    child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E676), fontSize: 8, fontWeight: FontWeight.bold)),
+                    child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 8, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -1222,7 +1195,7 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: const Color(0xFF00E676), borderRadius: BorderRadius.circular(6)),
+                        decoration: BoxDecoration(color: const Color(0xFF00E5FF), borderRadius: BorderRadius.circular(6)),
                         child: Text('★ ${item.rating.toStringAsFixed(1)}', style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -1235,31 +1208,57 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                   Flexible(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
                   if (item.isVerified) ...[
                     const SizedBox(width: 3),
-                    const Icon(Icons.verified, color: Color(0xFF00E676), size: 13),
+                    const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 13),
                   ],
                 ],
               ),
               const SizedBox(height: 2),
-              Text(item.subtitle, style: const TextStyle(color: Color(0xFF71717A), fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text('${item.distanceKm.toStringAsFixed(1)} km away', style: const TextStyle(color: Color(0xFF71717A), fontSize: 10)),
               const SizedBox(height: 8),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Text('${item.distanceKm.toStringAsFixed(1)} km away', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                  Text(item.price, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  Text(item.price, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 8),
-              GestureDetector(
-                onTap: widget.onChat,
-                child: Container(
-                  height: 32,
-                  width: double.infinity,
-                  decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(8)),
-                  alignment: Alignment.center,
-                  child: Text(widget.isJobMode ? 'Submit Quote' : 'Inquiry Chat', style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
+              // Prominent Primary Action + Two Compact Circular Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: widget.onChat,
+                      child: Container(
+                        height: 34,
+                        decoration: BoxDecoration(color: const Color(0xFF00E5FF), borderRadius: BorderRadius.circular(8)),
+                        alignment: Alignment.center,
+                        child: Text(widget.isJobMode ? 'Send Quote' : 'Negotiate / Bid', style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    height: 34,
+                    width: 34,
+                    decoration: BoxDecoration(color: const Color(0xFF25D366), borderRadius: BorderRadius.circular(8)),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.chat, color: Colors.white, size: 16),
+                      onPressed: widget.onWhatsApp,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    height: 34,
+                    width: 34,
+                    decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF00E5FF))),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.phone, color: Color(0xFF00E5FF), size: 16),
+                      onPressed: widget.onCall,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1269,7 +1268,7 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
   }
 }
 
-// ---------------- TAB 2: INTERACTIVE MAP RADAR VIEW ----------------
+// ---------------- TAB 2: MAP RADAR VIEW ----------------
 class MapRadarView extends StatelessWidget {
   final List<GridListing> listings;
   final double radarRadius;
@@ -1291,7 +1290,7 @@ class MapRadarView extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text(
-                    '🗺️ OPENSTREETMAP RADAR (${radarRadius.toStringAsFixed(0)} KM)',
+                    '🗺️ OPENSTREETMAP SPOT RADAR (${radarRadius.toStringAsFixed(0)} KM)',
                     style: const TextStyle(color: Color(0xFF71717A), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.0),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1299,8 +1298,8 @@ class MapRadarView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFF0E2719), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF00E676))),
-                  child: Text('${activeInRadar.length} Active Pins', style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
+                  decoration: BoxDecoration(color: const Color(0xFF0E272B), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF00E5FF))),
+                  child: Text('${activeInRadar.length} Active Pins', style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -1308,13 +1307,13 @@ class MapRadarView extends StatelessWidget {
           Expanded(
             child: FlutterMap(
               options: const MapOptions(
-                initialCenter: LatLng(28.6139, 77.2090), // Sector 14 Default Center
+                initialCenter: LatLng(28.6139, 77.2090),
                 initialZoom: 13.0,
               ),
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'io.radargrid.app',
+                  userAgentPackageName: 'io.spotapp.industrial',
                 ),
                 MarkerLayer(
                   markers: activeInRadar.map((item) {
@@ -1330,8 +1329,7 @@ class MapRadarView extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFF14141C),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF00E676), width: 2),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 4)],
+                            border: Border.all(color: const Color(0xFF00E5FF), width: 2),
                           ),
                           alignment: Alignment.center,
                           child: Text(item.iconEmoji, style: const TextStyle(fontSize: 20)),
@@ -1349,7 +1347,7 @@ class MapRadarView extends StatelessWidget {
   }
 }
 
-// ---------------- TAB 3: CONVERSATION LIST ----------------
+// ---------------- TAB 3: CHAT LIST ----------------
 class ChatListScreen extends StatelessWidget {
   final Map<String, List<ChatMessage>> chats;
   final Function(String) onOpenChat;
@@ -1366,7 +1364,7 @@ class ChatListScreen extends StatelessWidget {
           const Text('DIRECT NEGOTIATION CHANNELS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (keys.isEmpty)
-            const Center(child: Text('No active negotiations. Connect with a provider on Explore!', style: TextStyle(color: Colors.grey)))
+            const Center(child: Text('No active negotiations. Connect on Spot!', style: TextStyle(color: Colors.grey)))
           else
             ...keys.map((name) {
               final lastMsg = chats[name]!.last;
@@ -1374,7 +1372,7 @@ class ChatListScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
                 child: ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0xFF1B1B26), child: Icon(Icons.person, color: Color(0xFF00E676))),
+                  leading: const CircleAvatar(backgroundColor: Color(0xFF1B1B26), child: Icon(Icons.factory, color: Color(0xFF00E5FF))),
                   title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
                   subtitle: Text(lastMsg.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
                   trailing: Text(lastMsg.time, style: const TextStyle(color: Color(0xFF71717A), fontSize: 10)),
@@ -1388,7 +1386,7 @@ class ChatListScreen extends StatelessWidget {
   }
 }
 
-// ---------------- ACTIVE CHAT SCREEN WITH AI FAIR PRICE ESTIMATOR & UPI SETTLEMENT ----------------
+// ---------------- ACTIVE CHAT SCREEN WITH AI COPILOT & ZERO-FEE UPI SETTLEMENT ----------------
 class ActiveChatScreen extends StatefulWidget {
   final String providerName;
   final List<ChatMessage> messages;
@@ -1410,10 +1408,10 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   bool _isAiEstimating = false;
 
   final List<String> quickPrompts = [
-    'Is this available right now?',
-    'Can you do today evening?',
-    'What is your exact location?',
-    'Can we negotiate the price?',
+    'Can you deliver by tomorrow?',
+    'What is your lowest bid?',
+    'Send commercial specification sheet',
+    'Ready for UPI escrow settlement',
   ];
 
   void _send(String text, {bool isSlot = false, bool isUpi = false, bool isPin = false, String? amount}) {
@@ -1426,7 +1424,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
 
   void _runAiPriceEstimator() async {
     setState(() => _isAiEstimating = true);
-    final advice = await AiCopilotService.estimateFairPrice(widget.providerName, '₹500');
+    final advice = await AiCopilotService.estimateFairPrice(widget.providerName, '₹450/hr');
     setState(() {
       _isAiEstimating = false;
     });
@@ -1436,16 +1434,16 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   }
 
   void _openUpiSettlementModal() {
-    final upiCtrl = TextEditingController(text: '500');
+    final upiCtrl = TextEditingController(text: '450');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF14141C),
-        title: const Text('💳 Native UPI Deal Settlement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text('💳 Zero-Fee UPI Settlement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Scan QR or trigger UPI intent for instant settlement.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const Text('Scan dynamic QR or trigger UPI intent for instant zero-fee settlement.', style: TextStyle(color: Colors.white70, fontSize: 12)),
             const SizedBox(height: 12),
             Container(
               width: 140,
@@ -1471,11 +1469,11 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.white60))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
             onPressed: () async {
               final amt = upiCtrl.text;
               Navigator.pop(ctx);
-              final upiUri = 'upi://pay?pa=radargrid@upi&pn=RadarGridMerchant&am=$amt&cu=INR';
+              final upiUri = 'upi://pay?pa=spotmerchant@upi&pn=SpotIndustrial&am=$amt&cu=INR';
               final uri = Uri.parse(upiUri);
               final localContext = context;
               try {
@@ -1484,14 +1482,14 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
                 if (canOpen) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 } else {
-                  ScaffoldMessenger.of(localContext).showSnackBar(const SnackBar(content: Text('UPI Intent triggered. Payment handshake simulated successfully!')));
+                  ScaffoldMessenger.of(localContext).showSnackBar(const SnackBar(content: Text('UPI Intent triggered. Zero-fee settlement successful!')));
                 }
               } catch (e) {
                 if (!localContext.mounted) return;
                 ScaffoldMessenger.of(localContext).showSnackBar(SnackBar(content: Text('UPI Settlement completed for ₹$amt')));
               }
               if (!localContext.mounted) return;
-              _send('💳 [UPI Payment Settled]: ₹$amt via UPI Intent & Verified Handshake PIN.', isUpi: true, amount: amt);
+              _send('💳 [UPI Zero-Fee Settled]: ₹$amt via UPI Intent & Verified PIN.', isUpi: true, amount: amt);
             },
             child: const Text('Pay via UPI / GPay', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
@@ -1509,19 +1507,19 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
           children: [
             Flexible(child: Text(widget.providerName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 4),
-            const Icon(Icons.verified, color: Color(0xFF00E676), size: 14),
+            const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 14),
           ],
         ),
         backgroundColor: const Color(0xFF14141C),
         elevation: 0,
         actions: [
           IconButton(
-            icon: _isAiEstimating ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E676))) : const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 20),
-            tooltip: 'AI Fair Price Estimator',
+            icon: _isAiEstimating ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E5FF))) : const Icon(Icons.auto_awesome, color: Color(0xFF00E5FF), size: 20),
+            tooltip: 'AI Copilot Price Estimator',
             onPressed: _isAiEstimating ? null : _runAiPriceEstimator,
           ),
           IconButton(
-            icon: const Icon(Icons.currency_rupee, color: Color(0xFF00E676), size: 20),
+            icon: const Icon(Icons.currency_rupee, color: Color(0xFF00E5FF), size: 20),
             tooltip: 'UPI Settlement',
             onPressed: _openUpiSettlementModal,
           ),
@@ -1542,18 +1540,18 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: m.isUpiRequest
-                          ? const Color(0xFF0E2719)
+                          ? const Color(0xFF0E272B)
                           : (m.isSlotRequest || m.isPinVerified
                               ? const Color(0xFF1B1B26)
-                              : (m.isMe ? const Color(0xFF00E676) : const Color(0xFF1B1B26))),
+                              : (m.isMe ? const Color(0xFF00E5FF) : const Color(0xFF1B1B26))),
                       borderRadius: BorderRadius.circular(14),
-                      border: (m.isUpiRequest || m.isSlotRequest || m.isPinVerified) ? Border.all(color: const Color(0xFF00E676)) : null,
+                      border: (m.isUpiRequest || m.isSlotRequest || m.isPinVerified) ? Border.all(color: const Color(0xFF00E5FF)) : null,
                     ),
                     child: Text(
                       m.text,
                       style: TextStyle(
                         color: (m.isUpiRequest || m.isSlotRequest || m.isPinVerified)
-                            ? const Color(0xFF00E676)
+                            ? const Color(0xFF00E5FF)
                             : (m.isMe ? Colors.black : Colors.white),
                         fontSize: 13,
                         fontWeight: (m.isUpiRequest || m.isSlotRequest || m.isPinVerified) ? FontWeight.bold : FontWeight.normal,
@@ -1574,9 +1572,9 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
               itemBuilder: (context, index) {
                 final prompt = quickPrompts[index];
                 return ActionChip(
-                  label: Text(prompt, style: const TextStyle(fontSize: 11, color: Color(0xFF00E676))),
-                  backgroundColor: const Color(0xFF10281C),
-                  side: const BorderSide(color: Color(0xFF00E676), width: 0.5),
+                  label: Text(prompt, style: const TextStyle(fontSize: 11, color: Color(0xFF00E5FF))),
+                  backgroundColor: const Color(0xFF0E272B),
+                  side: const BorderSide(color: Color(0xFF00E5FF), width: 0.5),
                   onPressed: () => _send(prompt),
                 );
               },
@@ -1604,7 +1602,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(icon: const Icon(Icons.send, color: Color(0xFF00E676)), onPressed: () => _send(_textController.text)),
+                IconButton(icon: const Icon(Icons.send, color: Color(0xFF00E5FF)), onPressed: () => _send(_textController.text)),
               ],
             ),
           ),
@@ -1614,7 +1612,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   }
 }
 
-// ---------------- TAB 4: PROFILE SCREEN WITH MERCHANT SHOWCASE & PORTFOLIO ----------------
+// ---------------- TAB 4: PROFILE SCREEN ----------------
 class ProfileScreen extends StatefulWidget {
   final User? user;
   final List<GridListing> listings;
@@ -1638,7 +1636,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF14141C),
-          title: Text(isSignUp ? '📝 Super-App Sign Up' : '🔐 Super-App Sign In', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text(isSignUp ? '📝 Spot Enterprise Sign Up' : '🔐 Spot Enterprise Sign In', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1673,10 +1671,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => setDialogState(() => isSignUp = !isSignUp),
-              child: Text(isSignUp ? 'Have account? Sign In' : 'Need account? Sign Up', style: const TextStyle(color: Color(0xFF00E676), fontSize: 12)),
+              child: Text(isSignUp ? 'Have account? Sign In' : 'Need account? Sign Up', style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 12)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
               onPressed: () async {
                 try {
                   if (Firebase.apps.isNotEmpty) {
@@ -1746,7 +1744,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = widget.user;
-    final userListings = widget.listings.where((l) => l.authorId == user?.uid || l.authorId == 'rohan_123').toList();
+    final userListings = widget.listings.where((l) => l.authorId == user?.uid || l.authorId == 'apex_fab').toList();
 
     return SafeArea(
       child: ListView(
@@ -1756,7 +1754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: CircleAvatar(
               radius: 40,
               backgroundColor: Color(0xFF14141C),
-              child: Icon(Icons.person, size: 40, color: Color(0xFF00E676)),
+              child: Icon(Icons.factory, size: 40, color: Color(0xFF00E5FF)),
             ),
           ),
           const SizedBox(height: 12),
@@ -1765,39 +1763,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  user?.email ?? (user == null || user.isAnonymous ? 'Guest Neighbor' : 'Verified Merchant Showcase'),
+                  user?.email ?? (user == null || user.isAnonymous ? 'Guest Industrial Partner' : 'Verified Spot Enterprise'),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.verified, color: Color(0xFF00E676), size: 16),
+                const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 16),
               ],
             ),
           ),
           const SizedBox(height: 4),
-          const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Merchant Showcase', style: TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+          const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Spot Industrial Partner', style: TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (user == null || user.isAnonymous)
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
                   onPressed: _openAuthDialog,
                   child: const Text('Sign In / Register Account', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                 )
               else
                 OutlinedButton(
-                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF00E676))),
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF00E5FF))),
                   onPressed: _signOut,
-                  child: const Text('Sign Out', style: TextStyle(color: Color(0xFF00E676))),
+                  child: const Text('Sign Out', style: TextStyle(color: Color(0xFF00E5FF))),
                 ),
             ],
           ),
           const SizedBox(height: 24),
-          const Text('🖼️ MERCHANT PORTFOLIO & PAST WORK', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const Text('🏭 SPOT INDUSTRIAL SHOWCASE & PAST WORK', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (userListings.isEmpty)
-            const Center(child: Text('No past work showcase entries yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
+            const Center(child: Text('No industrial showcase listings yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
           else
             ...userListings.map((item) => Container(
               margin: const EdgeInsets.only(bottom: 10),
@@ -1816,12 +1814,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Flexible(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
                             if (item.isVerified) ...[
                               const SizedBox(width: 3),
-                              const Icon(Icons.verified, color: Color(0xFF00E676), size: 12),
+                              const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 12),
                             ],
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text('${item.price} • ${item.isSold ? '🔴 SOLD / COMPLETED' : '🟢 ACTIVE'}', style: TextStyle(color: item.isSold ? Colors.redAccent : const Color(0xFF00E676), fontSize: 11)),
+                        Text('${item.price} • ${item.isSold ? '🔴 SOLD / COMPLETED' : '🟢 ACTIVE'}', style: TextStyle(color: item.isSold ? Colors.redAccent : const Color(0xFF00E5FF), fontSize: 11)),
                       ],
                     ),
                   ),
@@ -1847,9 +1845,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ListTile(
             tileColor: const Color(0xFF14141C),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            leading: const Icon(Icons.verified_user, color: Color(0xFF00E676)),
-            title: const Text('Verified Merchant Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Verified Showcase & Portfolio • 15 Completed Deals', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            leading: const Icon(Icons.verified_user, color: Color(0xFF00E5FF)),
+            title: const Text('Spot Industrial Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: const Text('Verified Industrial Showcase • 18 Completed Contracts', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
           ),
         ],
       ),
