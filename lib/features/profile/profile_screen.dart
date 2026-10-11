@@ -227,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     itemBuilder: (context) => [
                       PopupMenuItem(value: 'sold', child: Text(item.isSold ? 'Mark Active' : 'Mark Sold / Completed', style: const TextStyle(fontSize: 12, color: Colors.white))),
-                      const PopupMenuItem(value: 'delete', child: Text('Delete Listing', style: const TextStyle(fontSize: 12, color: Colors.redAccent))),
+                      const PopupMenuItem(value: 'delete', child: Text('Delete Listing', style: TextStyle(fontSize: 12, color: Colors.redAccent))),
                     ],
                   ),
                 ],
