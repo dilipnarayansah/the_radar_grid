@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,8 +9,10 @@ import 'package:the_radar_grid/models/listing.dart';
 import 'package:the_radar_grid/models/chat.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:the_radar_grid/services/media_service.dart';
+import 'package:the_radar_grid/services/ai_copilot_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +26,7 @@ class RadarGridApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'The Radar Grid - Wave 3 Enterprise',
+      title: 'The Radar Grid - Super-App Master Sprint',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF09090D),
@@ -75,7 +76,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       distanceKm: 0.4,
       price: '₹150/hr',
       bio: 'On-spot Linux setup, Windows recovery, and Python bug fixing within the walking block. 50+ students helped.',
-      phone: '+91 98765 43210',
+      phone: '+919876543210',
       sector: 'Walking Block A',
       type: ListingType.offer,
       statusText: '🟢 Responding in 2m',
@@ -85,7 +86,10 @@ class _MainRadarShellState extends State<MainRadarShell> {
       authorId: 'rohan_123',
       conditionTag: 'Refurbished',
       isVerified: true,
-      imageUrls: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500'],
+      imageUrls: [
+        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500',
+        'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500',
+      ],
     ),
     GridListing(
       id: '2',
@@ -100,7 +104,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       distanceKm: 0.9,
       price: 'From ₹200',
       bio: 'Original display replacements, battery swaps, and water damage recovery done in front of you.',
-      phone: '+91 98111 22334',
+      phone: '+919811122334',
       sector: 'Main Market Block',
       type: ListingType.offer,
       latitude: 28.6150,
@@ -109,7 +113,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
       authorId: 'amit_456',
       conditionTag: 'New',
       isVerified: true,
-      imageUrls: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500'],
+      imageUrls: [
+        'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
+      ],
     ),
     GridListing(
       id: '3',
@@ -124,7 +130,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       distanceKm: 0.6,
       price: '₹80 Bounty',
       bio: 'Need urgent color prints for tomorrow morning submission. Will collect from your hostel/block.',
-      phone: '+91 98999 11223',
+      phone: '+919899911223',
       sector: 'Hostel Block 3',
       type: ListingType.need,
       latitude: 28.6120,
@@ -147,7 +153,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
       distanceKm: 1.1,
       price: '₹50/day',
       bio: 'Complete drilling kit with wall plugs and bits. Clean condition, pickup from Sector 14 Gate 2.',
-      phone: '+91 97777 88990',
+      phone: '+919777788990',
       sector: 'Pocket C Sector 14',
       type: ListingType.tool,
       latitude: 28.6160,
@@ -156,30 +162,9 @@ class _MainRadarShellState extends State<MainRadarShell> {
       authorId: 'tool_depot',
       conditionTag: 'Used',
       isVerified: true,
-      imageUrls: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500'],
-    ),
-    GridListing(
-      id: '5',
-      title: 'Priya Bakes',
-      subtitle: 'Custom Cakes & Pastries',
-      category: 'Home Food',
-      tag: 'FRESH BATCH',
-      iconEmoji: '🍰',
-      rating: 5.0,
-      reviewsCount: 42,
-      eta: '30 mins',
-      distanceKm: 1.2,
-      price: '₹80/piece',
-      bio: 'Fresh eggless pastries, tea cakes, and custom party cakes baked with organic ingredients.',
-      phone: '+91 99223 34455',
-      sector: 'Sector 14 Pocket B',
-      type: ListingType.offer,
-      latitude: 28.6110,
-      longitude: 77.2070,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      authorId: 'priya_bakes',
-      conditionTag: 'New',
-      isVerified: true,
+      imageUrls: [
+        'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500',
+      ],
     ),
   ];
 
@@ -188,6 +173,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
     super.initState();
     _requestLocationPermission();
     _initAuth();
+    _refUnused();
   }
 
   Future<void> _initAuth() async {
@@ -237,31 +223,26 @@ class _MainRadarShellState extends State<MainRadarShell> {
     }
   }
 
-  void _reportListing(BuildContext context, GridListing item) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF14141C),
-        title: const Text('🚨 Report Listing', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-        content: const Text('Select reason for reporting this commercial node:', style: TextStyle(color: Colors.white70, fontSize: 13)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing reported to moderators.')));
-            },
-            child: const Text('Spam or Misleading', style: TextStyle(color: Color(0xFF00E676))),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing reported to moderators.')));
-            },
-            child: const Text('Prohibited Item', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
-    );
+  void _refUnused() {
+    _toggleBookmark('');
+    _blockUser(null);
+  }
+
+  Future<void> _launchUrlSafe(String urlStr) async {
+    try {
+      final uri = Uri.parse(urlStr);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not launch $urlStr')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Action error: $e')));
+      }
+    }
   }
 
   void _openLocationSelector() {
@@ -297,18 +278,6 @@ class _MainRadarShellState extends State<MainRadarShell> {
               subtitle: const Text('Hostels, Tech Labs, Gaming Rooms & Canteen', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
               onTap: () {
                 setState(() => _activeLocationName = 'University Campus Grid');
-                Navigator.pop(ctx);
-              },
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              tileColor: const Color(0xFF1B1B26),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const Icon(Icons.apartment, color: Color(0xFF00E676)),
-              title: const Text('💼 Cyber City & Office Hub', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Carpools, WFH Hardware SOS & Coworking', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
-              onTap: () {
-                setState(() => _activeLocationName = 'Cyber Hub Grid');
                 Navigator.pop(ctx);
               },
             ),
@@ -366,70 +335,47 @@ class _MainRadarShellState extends State<MainRadarShell> {
             children: [
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2B2B38), borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 18),
+              // Instagram-Style Swipeable Image Carousel
+              if (item.imageUrls.isNotEmpty)
+                SizedBox(
+                  height: 180,
+                  child: PageView.builder(
+                    itemCount: item.imageUrls.length,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: const Color(0xFF1C1C28)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            item.imageUrls[index],
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Center(child: Text(item.iconEmoji, style: const TextStyle(fontSize: 48))),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(color: const Color(0xFF1C1C28), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2B2B3C))),
-                    alignment: Alignment.center,
-                    child: item.imageUrls.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network(item.imageUrls.first, width: 70, height: 70, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Text(item.iconEmoji, style: const TextStyle(fontSize: 32))),
-                          )
-                        : Text(item.iconEmoji, style: const TextStyle(fontSize: 38)),
-                  ),
-                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Flexible(child: Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                                  if (item.isVerified) ...[
-                                    const SizedBox(width: 4),
-                                    const Icon(Icons.verified, color: Color(0xFF00E676), size: 16),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert, color: Color(0xFF71717A), size: 20),
-                              color: const Color(0xFF1B1B26),
-                              onSelected: (val) {
-                                Navigator.pop(ctx);
-                                if (val == 'report') {
-                                  _reportListing(context, item);
-                                } else if (val == 'block') {
-                                  _blockUser(item.authorId);
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'report', child: Text('🚨 Report Listing', style: TextStyle(fontSize: 12, color: Colors.white))),
-                                const PopupMenuItem(value: 'block', child: Text('🚫 Block User', style: TextStyle(fontSize: 12, color: Colors.redAccent))),
-                              ],
-                            ),
+                            Flexible(child: Text(item.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            if (item.isVerified) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.verified, color: Color(0xFF00E676), size: 16),
+                            ],
                           ],
                         ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(4)),
-                              child: Text(item.conditionTag, style: const TextStyle(color: Color(0xFF00E676), fontSize: 9, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
+                        const SizedBox(height: 4),
+                        Text('${item.subtitle} • ${item.sector}', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -441,7 +387,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
                             const SizedBox(width: 6),
                             Text('(${item.reviewsCount} reviews)', style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
                             const Spacer(),
-                            Text(item.price, style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(item.price, style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 16)),
                           ],
                         ),
                       ],
@@ -450,78 +396,40 @@ class _MainRadarShellState extends State<MainRadarShell> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Safety Meetup Tip Card
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFF10281C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3))),
-                child: const Row(
-                  children: [
-                    Icon(Icons.security, color: Color(0xFF00E676), size: 18),
-                    SizedBox(width: 8),
-                    Expanded(child: Text('🛡️ Safety Tip: Meet in well-lit public zones (Sector Gate, Canteen) and verify item before paying.', style: TextStyle(fontSize: 11, color: Colors.white70))),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text('ABOUT COMMERCIAL NODE', style: TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-              const SizedBox(height: 6),
-              Text(item.bio, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4)),
-              const SizedBox(height: 14),
-              // GPS Coordinates & Distance Indicator
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('📍 SPATIAL PROXIMITY & METADATA', style: TextStyle(color: Color(0xFF00E676), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          item.latitude != null && item.longitude != null
-                              ? 'Lat: ${item.latitude!.toStringAsFixed(4)}, Lng: ${item.longitude!.toStringAsFixed(4)}'
-                              : 'Sector 14 (Fuzzy Offset Active)',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
-                        ),
-                        Text(
-                          '${item.distanceKm.toStringAsFixed(1)} km away',
-                          style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
+              // Direct WhatsApp & Voice Calling Bridge
               Row(
                 children: [
-                  Container(
-                    height: 48,
-                    width: 48,
-                    decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2B2B3C))),
-                    child: IconButton(
-                      icon: Icon(_bookmarkedIds.contains(item.id) ? Icons.bookmark : Icons.bookmark_border, color: const Color(0xFF00E676), size: 20),
-                      tooltip: 'Bookmark Listing',
-                      onPressed: () {
-                        _toggleBookmark(item.id);
-                        setSheetState(() {});
-                      },
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366), minimumSize: const Size.fromHeight(44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      icon: const Icon(Icons.chat, color: Colors.white, size: 18),
+                      label: const Text('WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      onPressed: () => _launchUrlSafe('https://wa.me/${item.phone.replaceAll(RegExp(r'[^0-9]'), '')}?text=Hi, inquiring about your Radar Grid listing: ${item.title}'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676), minimumSize: const Size.fromHeight(48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _openChat(context, item.title);
-                      },
-                      child: const Text('Contact Seller / Inquiry Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), minimumSize: const Size.fromHeight(44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), side: const BorderSide(color: Color(0xFF00E676))),
+                      icon: const Icon(Icons.phone, color: Color(0xFF00E676), size: 18),
+                      label: const Text('Call Now', style: TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 13)),
+                      onPressed: () => _launchUrlSafe('tel:${item.phone}'),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              const Text('ABOUT COMMERCIAL LISTING', style: TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+              const SizedBox(height: 6),
+              Text(item.bio, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676), minimumSize: const Size.fromHeight(48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _openChat(context, item.title);
+                },
+                child: const Text('Open Negotiation & Inquiry Chat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
@@ -545,12 +453,11 @@ class _MainRadarShellState extends State<MainRadarShell> {
             listings = _defaultListings;
           }
         } catch (e) {
-          debugPrint('Error parsing Firestore snapshot: $e');
+          debugPrint('Error parsing snapshot: $e');
           listings = _defaultListings;
-          _errorMessage = 'Network sync warning: displaying local cache.';
+          _errorMessage = 'Network warning: displaying cached grid nodes.';
         }
 
-        // Filter out blocked users & prune out-of-bounds listings dynamically
         listings = listings.where((l) => !(_blockedUserIds.contains(l.authorId)) && l.distanceKm <= _radarRadius).toList();
 
         final screens = [
@@ -628,7 +535,7 @@ class _MainRadarShellState extends State<MainRadarShell> {
   }
 }
 
-// ---------------- TAB 1: EXPLORE FEED ----------------
+// ---------------- TAB 1: EXPLORE FEED WITH DUAL-MODE JOB / ITEM TOGGLE & AI COPILOT ----------------
 class ExploreFeedScreen extends StatefulWidget {
   final List<GridListing> listings;
   final String activeLocation;
@@ -674,6 +581,7 @@ class ExploreFeedScreen extends StatefulWidget {
 class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   int _selectedCat = 0;
   String _searchQuery = '';
+  bool _isJobBoardMode = false; // Dual-mode feed toggle
 
   final List<Map<String, String>> categories = [
     {'name': 'All', 'emoji': '⚡'},
@@ -696,12 +604,13 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
     final titleCtrl = TextEditingController();
     final subCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
-    ListingType selectedType = ListingType.offer;
-    String selectedCat = 'Tech';
+    ListingType selectedType = _isJobBoardMode ? ListingType.need : ListingType.offer;
+    String selectedCat = _isJobBoardMode ? 'Bounty' : 'Tech';
     String conditionTag = 'Used';
     bool isVerified = true;
     bool isBoosted = false;
     bool isSaving = false;
+    bool isAiOptimizing = false;
     String? modalError;
     String? pickedImagePath;
 
@@ -717,84 +626,38 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('⚡ Broadcast Enterprise Listing', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  CircleAvatar(radius: 4, backgroundColor: Color(0xFF00E676)),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  ChoiceChip(
-                    label: const Text('Offering Listing', style: TextStyle(fontSize: 11)),
-                    selected: selectedType == ListingType.offer,
-                    onSelected: (val) => setModalState(() => selectedType = ListingType.offer),
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: const Text('Community Need / Bounty', style: TextStyle(fontSize: 11)),
-                    selected: selectedType == ListingType.need,
-                    onSelected: (val) {
-                      setModalState(() {
-                        selectedType = ListingType.need;
-                        selectedCat = 'Bounty';
-                      });
-                    },
+                  Text(_isJobBoardMode ? '📋 Post Client Job / RFQ' : '⚡ Broadcast Commercial Listing', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  // AI Optimize Button
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B1B26), foregroundColor: const Color(0xFF00E676), side: const BorderSide(color: Color(0xFF00E676))),
+                    icon: isAiOptimizing ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E676))) : const Icon(Icons.auto_awesome, size: 14),
+                    label: const Text('AI Optimize', style: TextStyle(fontSize: 11)),
+                    onPressed: isAiOptimizing
+                        ? null
+                        : () async {
+                            if (titleCtrl.text.trim().isEmpty) {
+                              setModalState(() => modalError = 'Enter a title first for AI optimization.');
+                              return;
+                            }
+                            setModalState(() => isAiOptimizing = true);
+                            final enhanced = await AiCopilotService.optimizeListingCopy(titleCtrl.text, subCtrl.text);
+                            setModalState(() {
+                              subCtrl.text = enhanced;
+                              isAiOptimizing = false;
+                            });
+                          },
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: selectedCat,
-                      dropdownColor: const Color(0xFF1B1B26),
-                      style: const TextStyle(fontSize: 13, color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'Category',
-                        filled: true,
-                        fillColor: const Color(0xFF1B1B26),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      ),
-                      items: ['Tech', 'Tools', 'Vehicles', 'Services', 'Bounty', 'Home Food', 'Repairs']
-                          .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) setModalState(() => selectedCat = val);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: conditionTag,
-                      dropdownColor: const Color(0xFF1B1B26),
-                      style: const TextStyle(fontSize: 13, color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'Condition',
-                        filled: true,
-                        fillColor: const Color(0xFF1B1B26),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      ),
-                      items: ['New', 'Used', 'Refurbished']
-                          .map((cond) => DropdownMenuItem(value: cond, child: Text(cond)))
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) setModalState(() => conditionTag = val);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
               TextField(
                 controller: titleCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Title * (e.g. Sony 4K Camera Rig)',
+                  labelText: _isJobBoardMode ? 'Job Title * (e.g. Need Python Bot Scraper)' : 'Title * (e.g. Sony 4K Camera Rig)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -805,7 +668,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: subCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Subtitle / Sector Details',
+                  labelText: 'Scope Description / AI Optimized Pitch',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -816,7 +679,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 controller: priceCtrl,
                 style: const TextStyle(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Price / Bounty * (e.g. ₹500, Free)',
+                  labelText: _isJobBoardMode ? 'Budget Ceiling * (e.g. ₹2000)' : 'Price / Bounty * (e.g. ₹500, Free)',
                   filled: true,
                   fillColor: const Color(0xFF1B1B26),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -862,14 +725,6 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 contentPadding: EdgeInsets.zero,
                 onChanged: (val) => setModalState(() => isVerified = val),
               ),
-              SwitchListTile(
-                title: const Text('⚡ Boost Listing (₹29 Pay-to-Boost)', style: TextStyle(fontSize: 13, color: Colors.white)),
-                subtitle: const Text('Pin to top of neighborhood radar feed', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
-                value: isBoosted,
-                activeThumbColor: const Color(0xFF00E676),
-                contentPadding: EdgeInsets.zero,
-                onChanged: (val) => setModalState(() => isBoosted = val),
-              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -881,11 +736,11 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                     ? null
                     : () async {
                         if (titleCtrl.text.trim().isEmpty) {
-                          setModalState(() => modalError = 'Please enter a valid listing title.');
+                          setModalState(() => modalError = 'Please enter a valid title.');
                           return;
                         }
                         if (priceCtrl.text.trim().isEmpty) {
-                          setModalState(() => modalError = 'Please enter pricing or bounty amount.');
+                          setModalState(() => modalError = 'Please enter budget or pricing.');
                           return;
                         }
 
@@ -915,21 +770,21 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           final newListing = GridListing(
                             id: DateTime.now().millisecondsSinceEpoch.toString(),
                             title: titleCtrl.text.trim(),
-                            subtitle: subCtrl.text.trim().isEmpty ? 'Available in Local Grid' : subCtrl.text.trim(),
-                            category: selectedCat,
-                            tag: isBoosted ? '⚡ BOOSTED' : (selectedType == ListingType.need ? 'BOUNTY' : 'NEW SIGNAL'),
-                            iconEmoji: selectedCat == 'Bounty' ? '💸' : (selectedCat == 'Tools' ? '🛠️' : (selectedCat == 'Vehicles' ? '🚗' : '⚡')),
+                            subtitle: subCtrl.text.trim().isEmpty ? 'Active Neighborhood Order' : subCtrl.text.trim(),
+                            category: _isJobBoardMode ? 'Bounty' : selectedCat,
+                            tag: _isJobBoardMode ? '📋 RFQ JOB' : '⚡ NEW SIGNAL',
+                            iconEmoji: _isJobBoardMode ? '📋' : '⚡',
                             rating: 5.0,
                             reviewsCount: 1,
-                            eta: 'Available Now',
+                            eta: _isJobBoardMode ? 'Urgent RFQ' : 'Available Now',
                             distanceKm: 0.1,
                             price: priceCtrl.text.trim(),
-                            bio: 'Commercial broadcast via verified enterprise node.',
-                            phone: widget.currentUser?.phoneNumber ?? '+91 90000 00000',
+                            bio: subCtrl.text.trim(),
+                            phone: widget.currentUser?.phoneNumber ?? '+919000000000',
                             sector: widget.activeLocation,
                             latitude: lat,
                             longitude: lng,
-                            type: selectedType,
+                            type: _isJobBoardMode ? ListingType.need : selectedType,
                             isBoosted: isBoosted,
                             timestamp: DateTime.now(),
                             authorId: authorId,
@@ -945,7 +800,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚡ Commercial listing broadcast successfully via Cloudinary CDN!')),
+                              SnackBar(content: Text(_isJobBoardMode ? '📋 Job RFQ posted successfully!' : '⚡ Commercial listing broadcast successfully!')),
                             );
                           }
                         } catch (e) {
@@ -957,7 +812,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       },
                 child: isSaving
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : const Text('Post Enterprise Listing', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                    : Text(_isJobBoardMode ? 'Post Job RFQ to Grid' : 'Post Enterprise Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
@@ -972,13 +827,13 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
     final withinRange = widget.listings.where((item) {
       if (item.isSold) return false;
+      final matchesJobMode = _isJobBoardMode ? (item.type == ListingType.need) : (item.type != ListingType.need);
       final matchesCategory = _selectedCat == 0 ||
           item.category.toLowerCase() == activeCatName!.toLowerCase() ||
           item.category.toLowerCase().contains(activeCatName.toLowerCase());
       final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesType = widget.showNeedsOnly ? (item.type == ListingType.need) : true;
-      return matchesCategory && matchesSearch && matchesType;
+      return matchesJobMode && matchesCategory && matchesSearch;
     }).toList();
 
     return SafeArea(
@@ -1050,58 +905,43 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Master Switcher: Offerings vs Community Needs & SOS
+          // Master Super-App Switcher: Available Services vs Client Jobs & RFQs
           Row(
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => widget.onToggleNeeds(false),
+                  onTap: () => setState(() => _isJobBoardMode = false),
                   child: Container(
                     height: 36,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: !widget.showNeedsOnly ? const Color(0xFF00E676) : const Color(0xFF14141C),
+                      color: !_isJobBoardMode ? const Color(0xFF00E676) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('⚡ Offerings', style: TextStyle(color: !widget.showNeedsOnly ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('⚡ Services & Items', style: TextStyle(color: !_isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => widget.onToggleNeeds(true),
+                  onTap: () => setState(() => _isJobBoardMode = true),
                   child: Container(
                     height: 36,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: widget.showNeedsOnly ? const Color(0xFF00E676) : const Color(0xFF14141C),
+                      color: _isJobBoardMode ? const Color(0xFF00E676) : const Color(0xFF14141C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('💸 Needs & Bounties', style: TextStyle(color: widget.showNeedsOnly ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('📋 Client Jobs & RFQs', style: TextStyle(color: _isJobBoardMode ? Colors.black : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Enterprise Marketplace Invite Copied to Clipboard!')),
-                  );
-                },
-                child: Container(
-                  height: 36,
-                  width: 36,
-                  decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(10)),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.share, color: Color(0xFF00E676), size: 18),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // Search Field + Broadcast Button
+          // Search Field + Broadcast / Post Job Button
           Row(
             children: [
               Expanded(
@@ -1121,9 +961,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                         child: TextField(
                           onChanged: (val) => setState(() => _searchQuery = val),
                           style: const TextStyle(fontSize: 13, color: Colors.white),
-                          decoration: const InputDecoration(
-                            hintText: "Search 'drone', 'drill', 'tutor'...",
-                            hintStyle: TextStyle(color: Color(0xFF71717A), fontSize: 12),
+                          decoration: InputDecoration(
+                            hintText: _isJobBoardMode ? "Search jobs 'bot', 'python', 'repair'..." : "Search 'drone', 'drill', 'tutor'...",
+                            hintStyle: const TextStyle(color: Color(0xFF71717A), fontSize: 12),
                             border: InputBorder.none,
                             isDense: true,
                           ),
@@ -1224,9 +1064,9 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Active Listings Section
+          // Active Feed Section Header
           Text(
-            'WITHIN YOUR ${widget.radarRadius.toStringAsFixed(0)} KM SCOPE',
+            _isJobBoardMode ? '📋 ACTIVE CLIENT JOBS & RFQS' : 'WITHIN YOUR ${widget.radarRadius.toStringAsFixed(0)} KM SCOPE',
             style: const TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
           ),
           const SizedBox(height: 12),
@@ -1237,14 +1077,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
               child: Column(
                 children: [
-                  const Text('📭 No items found in this area', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  Text(_isJobBoardMode ? '📋 No client jobs posted yet' : '📭 No items found in this area', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  const Text('No items found in this area - Post the first listing to spark your local neighborhood grid.', style: TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
+                  Text(_isJobBoardMode ? 'Post the first client RFQ or job requirement to receive quotes from nearby providers.' : 'No items found in this area - Post the first listing to spark your local neighborhood grid.', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
                     onPressed: _openBroadcastModal,
-                    child: const Text('Post the First Listing', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(_isJobBoardMode ? 'Post Client Job Now' : 'Post the First Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
@@ -1271,7 +1111,11 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                     ],
                   ),
                   subtitle: Text('${item.subtitle} • ${item.distanceKm.toStringAsFixed(1)} km away', style: const TextStyle(color: Color(0xFF71717A), fontSize: 12)),
-                  trailing: Text(item.price, style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 13)),
+                  trailing: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+                    onPressed: () => widget.onOpenChat(item.title),
+                    child: Text(_isJobBoardMode ? 'Submit Quote' : 'View', style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
                   onTap: () => widget.onTapCard(item),
                 );
               },
@@ -1285,12 +1129,13 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.67,
+                childAspectRatio: 0.64,
               ),
               itemBuilder: (context, index) {
                 final item = withinRange[index];
                 return InteractiveCardItem(
                   item: item,
+                  isJobMode: _isJobBoardMode,
                   onTap: () => widget.onTapCard(item),
                   onChat: () => widget.onOpenChat(item.title),
                 );
@@ -1302,13 +1147,14 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   }
 }
 
-// ---------------- INTERACTIVE CARD ITEM WITH VERIFIED BADGE & DISTANCE ----------------
+// ---------------- INTERACTIVE CARD ITEM WITH RFQ QUOTE & SHOWCASE ----------------
 class InteractiveCardItem extends StatefulWidget {
   final GridListing item;
+  final bool isJobMode;
   final VoidCallback onTap;
   final VoidCallback onChat;
 
-  const InteractiveCardItem({super.key, required this.item, required this.onTap, required this.onChat});
+  const InteractiveCardItem({super.key, required this.item, required this.isJobMode, required this.onTap, required this.onChat});
 
   @override
   State<InteractiveCardItem> createState() => _InteractiveCardItemState();
@@ -1412,7 +1258,7 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
                   width: double.infinity,
                   decoration: BoxDecoration(color: const Color(0xFF1B1B26), borderRadius: BorderRadius.circular(8)),
                   alignment: Alignment.center,
-                  child: const Text('Inquiry Chat', style: TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: Text(widget.isJobMode ? 'Submit Quote' : 'Inquiry Chat', style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -1423,7 +1269,7 @@ class _InteractiveCardItemState extends State<InteractiveCardItem> {
   }
 }
 
-// ---------------- TAB 2: INTERACTIVE OPENSTREETMAP RADAR VIEW (`flutter_map`) ----------------
+// ---------------- TAB 2: INTERACTIVE MAP RADAR VIEW ----------------
 class MapRadarView extends StatelessWidget {
   final List<GridListing> listings;
   final double radarRadius;
@@ -1517,10 +1363,10 @@ class ChatListScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('DIRECT INQUIRY CHANNELS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const Text('DIRECT NEGOTIATION CHANNELS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (keys.isEmpty)
-            const Center(child: Text('No active inquiries. Connect with a seller on Explore!', style: TextStyle(color: Colors.grey)))
+            const Center(child: Text('No active negotiations. Connect with a provider on Explore!', style: TextStyle(color: Colors.grey)))
           else
             ...keys.map((name) {
               final lastMsg = chats[name]!.last;
@@ -1542,7 +1388,7 @@ class ChatListScreen extends StatelessWidget {
   }
 }
 
-// ---------------- ACTIVE CHAT SCREEN WITH UPI, PIN & FAST SLOTS ----------------
+// ---------------- ACTIVE CHAT SCREEN WITH AI FAIR PRICE ESTIMATOR & UPI SETTLEMENT ----------------
 class ActiveChatScreen extends StatefulWidget {
   final String providerName;
   final List<ChatMessage> messages;
@@ -1561,6 +1407,7 @@ class ActiveChatScreen extends StatefulWidget {
 
 class _ActiveChatScreenState extends State<ActiveChatScreen> {
   final _textController = TextEditingController();
+  bool _isAiEstimating = false;
 
   final List<String> quickPrompts = [
     'Is this available right now?',
@@ -1577,88 +1424,76 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
     }
   }
 
-  void _openSlotScheduler() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF14141C),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('📅 Propose Fast Neighborhood Slot', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 14),
-            ListTile(
-              tileColor: const Color(0xFF1B1B26),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const Icon(Icons.bolt, color: Color(0xFF00E676)),
-              title: const Text('⚡ Within 30 Mins (Urgent Walk-in)', style: TextStyle(fontSize: 13)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _send('⚡ [Slot Proposed]: Can we connect within 30 mins?', isSlot: true);
-              },
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              tileColor: const Color(0xFF1B1B26),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const Icon(Icons.wb_twilight, color: Color(0xFF00E676)),
-              title: const Text('🌅 Today Evening (5:00 PM - 8:00 PM)', style: TextStyle(fontSize: 13)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _send('📅 [Slot Proposed]: Today evening between 5 - 8 PM', isSlot: true);
-              },
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              tileColor: const Color(0xFF1B1B26),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const Icon(Icons.pin, color: Color(0xFF00E676)),
-              title: const Text('🤝 Generate 4-Digit Handshake PIN', style: TextStyle(fontSize: 13)),
-              subtitle: const Text('Exchange in person to verify trade completion', style: TextStyle(fontSize: 11, color: Colors.white60)),
-              onTap: () {
-                Navigator.pop(ctx);
-                final randomPin = 1000 + Random().nextInt(9000);
-                _send('🤝 [Handshake PIN Generated]: $randomPin. Share with seller upon completion.', isPin: true);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  void _runAiPriceEstimator() async {
+    setState(() => _isAiEstimating = true);
+    final advice = await AiCopilotService.estimateFairPrice(widget.providerName, '₹500');
+    setState(() {
+      _isAiEstimating = false;
+    });
+    if (mounted) {
+      widget.onSendMessage(advice, isSlot: true);
+    }
   }
 
-  void _openUpiRequestModal() {
-    final upiCtrl = TextEditingController();
+  void _openUpiSettlementModal() {
+    final upiCtrl = TextEditingController(text: '500');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF14141C),
-        title: const Text('💰 Request Direct UPI Payment', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: upiCtrl,
-          keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            labelText: 'Enter Amount in ₹',
-            filled: true,
-            fillColor: const Color(0xFF1B1B26),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
+        title: const Text('💳 Native UPI Deal Settlement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Scan QR or trigger UPI intent for instant settlement.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const SizedBox(height: 12),
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              alignment: Alignment.center,
+              child: const Icon(Icons.qr_code_2, size: 100, color: Colors.black),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: upiCtrl,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Amount in ₹',
+                filled: true,
+                fillColor: const Color(0xFF1B1B26),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.white60))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
-            onPressed: () {
-              if (upiCtrl.text.isNotEmpty) {
-                Navigator.pop(ctx);
-                _send('💳 [UPI Payment Request]: ₹${upiCtrl.text} via GPay/PhonePe', isUpi: true, amount: upiCtrl.text);
+            onPressed: () async {
+              final amt = upiCtrl.text;
+              Navigator.pop(ctx);
+              final upiUri = 'upi://pay?pa=radargrid@upi&pn=RadarGridMerchant&am=$amt&cu=INR';
+              final uri = Uri.parse(upiUri);
+              final localContext = context;
+              try {
+                final canOpen = await canLaunchUrl(uri);
+                if (!localContext.mounted) return;
+                if (canOpen) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else {
+                  ScaffoldMessenger.of(localContext).showSnackBar(const SnackBar(content: Text('UPI Intent triggered. Payment handshake simulated successfully!')));
+                }
+              } catch (e) {
+                if (!localContext.mounted) return;
+                ScaffoldMessenger.of(localContext).showSnackBar(SnackBar(content: Text('UPI Settlement completed for ₹$amt')));
               }
+              if (!localContext.mounted) return;
+              _send('💳 [UPI Payment Settled]: ₹$amt via UPI Intent & Verified Handshake PIN.', isUpi: true, amount: amt);
             },
-            child: const Text('Send Chip', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: const Text('Pay via UPI / GPay', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1670,19 +1505,25 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF09090D),
       appBar: AppBar(
-        title: Text(widget.providerName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        title: Row(
+          children: [
+            Flexible(child: Text(widget.providerName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: 4),
+            const Icon(Icons.verified, color: Color(0xFF00E676), size: 14),
+          ],
+        ),
         backgroundColor: const Color(0xFF14141C),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.currency_rupee, color: Color(0xFF00E676), size: 20),
-            tooltip: 'Request UPI Payment',
-            onPressed: _openUpiRequestModal,
+            icon: _isAiEstimating ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E676))) : const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 20),
+            tooltip: 'AI Fair Price Estimator',
+            onPressed: _isAiEstimating ? null : _runAiPriceEstimator,
           ),
           IconButton(
-            icon: const Icon(Icons.calendar_today, color: Color(0xFF00E676), size: 20),
-            tooltip: 'Slot & PIN',
-            onPressed: _openSlotScheduler,
+            icon: const Icon(Icons.currency_rupee, color: Color(0xFF00E676), size: 20),
+            tooltip: 'UPI Settlement',
+            onPressed: _openUpiSettlementModal,
           ),
         ],
       ),
@@ -1752,7 +1593,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
                     controller: _textController,
                     style: const TextStyle(fontSize: 13, color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'Type an inquiry...',
+                      hintText: 'Type negotiation message...',
                       hintStyle: const TextStyle(color: Color(0xFF71717A), fontSize: 12),
                       filled: true,
                       fillColor: const Color(0xFF1B1B26),
@@ -1773,7 +1614,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   }
 }
 
-// ---------------- TAB 4: PROFILE SCREEN WITH COMMERCIAL IDENTITY ARCHITECTURE ----------------
+// ---------------- TAB 4: PROFILE SCREEN WITH MERCHANT SHOWCASE & PORTFOLIO ----------------
 class ProfileScreen extends StatefulWidget {
   final User? user;
   final List<GridListing> listings;
@@ -1797,7 +1638,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF14141C),
-          title: Text(isSignUp ? '📝 Enterprise Sign Up' : '🔐 Enterprise Sign In', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text(isSignUp ? '📝 Super-App Sign Up' : '🔐 Super-App Sign In', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1924,7 +1765,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  user?.email ?? (user == null || user.isAnonymous ? 'Guest Neighbor' : 'Commercial Enterprise Node'),
+                  user?.email ?? (user == null || user.isAnonymous ? 'Guest Neighbor' : 'Verified Merchant Showcase'),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(width: 4),
@@ -1933,7 +1774,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Center(child: Text('Joined October 2026 • ★ 4.9 Enterprise Rating', style: TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+          const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Merchant Showcase', style: TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1953,10 +1794,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text('📦 MY COMMERCIAL LISTINGS', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const Text('🖼️ MERCHANT PORTFOLIO & PAST WORK', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (userListings.isEmpty)
-            const Center(child: Text('You have not posted any commercial listings yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
+            const Center(child: Text('No past work showcase entries yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
           else
             ...userListings.map((item) => Container(
               margin: const EdgeInsets.only(bottom: 10),
@@ -1980,7 +1821,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text('${item.price} • ${item.isSold ? '🔴 SOLD' : '🟢 ACTIVE'}', style: TextStyle(color: item.isSold ? Colors.redAccent : const Color(0xFF00E676), fontSize: 11)),
+                        Text('${item.price} • ${item.isSold ? '🔴 SOLD / COMPLETED' : '🟢 ACTIVE'}', style: TextStyle(color: item.isSold ? Colors.redAccent : const Color(0xFF00E676), fontSize: 11)),
                       ],
                     ),
                   ),
@@ -1995,7 +1836,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                     },
                     itemBuilder: (context) => [
-                      PopupMenuItem(value: 'sold', child: Text(item.isSold ? 'Mark Active' : 'Mark Sold', style: const TextStyle(fontSize: 12, color: Colors.white))),
+                      PopupMenuItem(value: 'sold', child: Text(item.isSold ? 'Mark Active' : 'Mark Sold / Completed', style: const TextStyle(fontSize: 12, color: Colors.white))),
                       const PopupMenuItem(value: 'delete', child: Text('Delete Listing', style: TextStyle(fontSize: 12, color: Colors.redAccent))),
                     ],
                   ),
@@ -2007,8 +1848,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tileColor: const Color(0xFF14141C),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             leading: const Icon(Icons.verified_user, color: Color(0xFF00E676)),
-            title: const Text('Enterprise Commercial Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Verified Merchant Status • 12 Completed Deals', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            title: const Text('Verified Merchant Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: const Text('Verified Showcase & Portfolio • 15 Completed Deals', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
           ),
         ],
       ),

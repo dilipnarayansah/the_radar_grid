@@ -44,6 +44,7 @@ void main() {
         home: Scaffold(
           body: InteractiveCardItem(
             item: boostedItem,
+            isJobMode: false,
             onTap: () {},
             onChat: () {},
           ),
@@ -62,6 +63,7 @@ void main() {
         home: Scaffold(
           body: InteractiveCardItem(
             item: normalItem,
+            isJobMode: false,
             onTap: () {},
             onChat: () {},
           ),
@@ -80,6 +82,7 @@ void main() {
         home: Scaffold(
           body: InteractiveCardItem(
             item: item,
+            isJobMode: false,
             onTap: () => tapped = true,
             onChat: () {},
           ),
@@ -105,7 +108,7 @@ void main() {
       ));
 
       expect(find.text('Guest Neighbor'), findsOneWidget);
-      expect(find.textContaining('Enterprise Rating'), findsOneWidget);
+      expect(find.textContaining('Verified Merchant Showcase'), findsOneWidget);
       expect(find.text('Sign In / Register Account'), findsOneWidget);
     });
   });
