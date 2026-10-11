@@ -219,3 +219,35 @@ class _SpotListingCardState extends State<SpotListingCard> {
     );
   }
 }
+
+class SpotListingCardSkeleton extends StatelessWidget {
+  const SpotListingCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10141C),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1E2638)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(width: 80, height: 10, color: const Color(0xFF1E2638)),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(color: const Color(0xFF1E2638), borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(width: 120, height: 12, color: const Color(0xFF1E2638)),
+          const SizedBox(height: 4),
+          Container(width: 70, height: 10, color: const Color(0xFF1E2638)),
+        ],
+      ),
+    );
+  }
+}

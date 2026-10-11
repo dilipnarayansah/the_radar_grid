@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:the_radar_grid/models/listing.dart';
 import 'package:the_radar_grid/models/chat.dart';
 import 'package:the_radar_grid/features/map/spot_radar_map.dart';
@@ -173,14 +174,17 @@ class _MainSpotShellState extends State<MainSpotShell> {
         ];
 
         return Scaffold(
-          backgroundColor: const Color(0xFF09090D),
+          backgroundColor: const Color(0xFF080B10),
           body: screens[_currentIndex],
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
-            onTap: (idx) => setState(() => _currentIndex = idx),
-            backgroundColor: const Color(0xFF14141C),
+            onTap: (idx) {
+              HapticFeedback.selectionClick();
+              setState(() => _currentIndex = idx);
+            },
+            backgroundColor: const Color(0xFF10141C),
             selectedItemColor: const Color(0xFF00E5FF),
-            unselectedItemColor: const Color(0xFF71717A),
+            unselectedItemColor: const Color(0xFF8E9BAE),
             type: BottomNavigationBarType.fixed,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),

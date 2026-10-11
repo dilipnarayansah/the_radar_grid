@@ -9,6 +9,14 @@ void main() async {
   runApp(const SpotApp());
 }
 
+class _BouncingScrollBehavior extends MaterialScrollBehavior {
+  const _BouncingScrollBehavior();
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+  }
+}
+
 class SpotApp extends StatelessWidget {
   const SpotApp({super.key});
 
@@ -17,6 +25,7 @@ class SpotApp extends StatelessWidget {
     return MaterialApp(
       title: 'Spot',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const _BouncingScrollBehavior(),
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF080B10),
         colorScheme: const ColorScheme.dark(

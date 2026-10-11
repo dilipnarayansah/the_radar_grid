@@ -27,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF14141C),
+          backgroundColor: const Color(0xFF10141C),
           title: Text(isSignUp ? '📝 Spot Enterprise Sign Up' : '🔐 Spot Enterprise Sign In', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -38,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Email Address',
                   filled: true,
-                  fillColor: const Color(0xFF1B1B26),
+                  fillColor: const Color(0xFF080B10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
@@ -50,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Password',
                   filled: true,
-                  fillColor: const Color(0xFF1B1B26),
+                  fillColor: const Color(0xFF080B10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
@@ -145,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Center(
             child: CircleAvatar(
               radius: 40,
-              backgroundColor: Color(0xFF14141C),
+              backgroundColor: Color(0xFF10141C),
               child: Icon(Icons.factory, size: 40, color: Color(0xFF00E5FF)),
             ),
           ),
@@ -164,7 +164,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Spot Industrial Partner', style: TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+          const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Spot Industrial Partner', style: TextStyle(fontSize: 12, color: Color(0xFF8E9BAE)))),
+          const SizedBox(height: 16),
+          // Contract Counters & Tier Badge Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1E2638))),
+                child: const Row(
+                  children: [
+                    Icon(Icons.military_tech, color: Color(0xFF00E5FF), size: 16),
+                    SizedBox(width: 6),
+                    Text('Tier-1 Verified Pro', style: TextStyle(color: Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1E2638))),
+                child: const Row(
+                  children: [
+                    Icon(Icons.handshake, color: Color(0xFFFF9F1C), size: 16),
+                    SizedBox(width: 6),
+                    Text('18 Contracts Completed', style: TextStyle(color: Color(0xFFFF9F1C), fontSize: 11, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -184,15 +214,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text('🏭 SPOT INDUSTRIAL SHOWCASE & PAST WORK', style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          const Text('🏭 SPOT INDUSTRIAL SHOWCASE & PAST WORK', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (userListings.isEmpty)
-            const Center(child: Text('No industrial showcase listings yet.', style: TextStyle(color: Colors.grey, fontSize: 12)))
+            const Center(child: Text('No industrial showcase listings yet.', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12)))
           else
             ...userListings.map((item) => Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: const Color(0xFF14141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF22222E))),
+              decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF1E2638))),
               child: Row(
                 children: [
                   Text(item.iconEmoji, style: const TextStyle(fontSize: 28)),
@@ -216,8 +246,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Color(0xFF71717A)),
-                    color: const Color(0xFF1B1B26),
+                    icon: const Icon(Icons.more_vert, color: Color(0xFF8E9BAE)),
+                    color: const Color(0xFF10141C),
                     onSelected: (val) {
                       if (val == 'sold') {
                         _toggleSold(item);
@@ -235,11 +265,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             )),
           const SizedBox(height: 24),
           ListTile(
-            tileColor: const Color(0xFF14141C),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            tileColor: const Color(0xFF10141C),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF1E2638))),
             leading: const Icon(Icons.verified_user, color: Color(0xFF00E5FF)),
-            title: const Text('Spot Industrial Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Verified Industrial Showcase • 18 Completed Contracts', style: TextStyle(fontSize: 11, color: Color(0xFF71717A))),
+            title: const Text('Spot Industrial Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+            subtitle: const Text('Verified Industrial Showcase • 18 Completed Contracts', style: TextStyle(fontSize: 11, color: Color(0xFF8E9BAE))),
           ),
         ],
       ),
