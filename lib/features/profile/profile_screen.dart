@@ -166,36 +166,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Spot Industrial Partner', style: TextStyle(fontSize: 12, color: Color(0xFF8E9BAE)))),
           const SizedBox(height: 16),
-          // Contract Counters & Tier Badge Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1E2638))),
-                child: const Row(
-                  children: [
-                    Icon(Icons.military_tech, color: Color(0xFF00E5FF), size: 16),
-                    SizedBox(width: 6),
-                    Text('Tier-1 Verified Pro', style: TextStyle(color: Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1E2638))),
-                child: const Row(
-                  children: [
-                    Icon(Icons.handshake, color: Color(0xFFFF9F1C), size: 16),
-                    SizedBox(width: 6),
-                    Text('18 Contracts Completed', style: TextStyle(color: Color(0xFFFF9F1C), fontSize: 11, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -217,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Text('🏭 SPOT INDUSTRIAL SHOWCASE & PAST WORK', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
           const SizedBox(height: 12),
           if (userListings.isEmpty)
-            const Center(child: Text('No industrial showcase listings yet.', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12)))
+            const Center(child: Text('No jobs near you yet — post the first one.', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12)))
           else
             ...userListings.map((item) => Container(
               margin: const EdgeInsets.only(bottom: 10),

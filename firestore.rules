@@ -1,44 +1,87 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuthenticated() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // users/{uid}: read, create, update only if signedIn() && request.auth.uid == uid; delete: false.
+    match /users/{uid} {
+      allow read, create, update: if isOwner(uid);
+      allow delete: if false;
+    }
+
+    // providers/{uid}: authenticated read; owner writes profile fields; server-only writes for idVerified.
+    match /providers/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isOwner(uid) && (!request.resource.data.keys().hasAll(['idVerified']) || resource == null || request.resource.data.idVerified == resource.data.idVerified);
+      allow delete: if false;
+    }
+
+    // jobs/{jobId}: signedIn read; buyer creates (buyerId == request.auth.uid); status transitions restricted.
+    match /jobs/{jobId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.buyerId == request.auth.uid;
+      allow update: if signedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.providerId == request.auth.uid ||
+        (resource.data.participants != null && request.auth.uid in resource.data.participants)
+      );
+      allow delete: if signedIn() && resource.data.buyerId == request.auth.uid;
+
+      // jobs/{jobId}/quotes/{quoteId}: providers create structured quotes; job participants read.
+      match /quotes/{quoteId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.providerId == request.auth.uid;
+        allow update, delete: if signedIn() && resource.data.providerId == request.auth.uid;
+      }
+
+      // jobs/{jobId}/messages/{msgId}: read and create strictly if request.auth.uid is in job participants.
+      match /messages/{msgId} {
+        allow read, create: if signedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // payments/{id} and reviews/{id}: server-only writes (allow write: if false; signedIn read for reviews).
+    match /payments/{paymentId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if signedIn();
+      allow write: if false;
     }
 
     // Listings: Public read, validated create, restricted update/delete
     match /listings/{listingId} {
       allow read: if true;
-      allow create: if isAuthenticated() 
+      allow create: if signedIn() 
                     && request.resource.data.title is string 
                     && request.resource.data.title.size() > 0;
-      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || resource.data.authorId == null);
+      allow update, delete: if signedIn() && (request.auth.uid == resource.data.authorId || resource.data.authorId == null);
     }
 
     // RFQs: Public read, validated create, restricted update/delete
     match /rfqs/{rfqId} {
       allow read: if true;
-      allow create: if isAuthenticated() 
+      allow create: if signedIn() 
                     && request.resource.data.title is string 
                     && request.resource.data.title.size() > 0;
-      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || resource.data.authorId == null);
-    }
-
-    // Profiles: Public read, owner-only write
-    match /profiles/{userId} {
-      allow read: if true;
-      allow write: if isAuthenticated() && isOwner(userId);
+      allow update, delete: if signedIn() && (request.auth.uid == resource.data.authorId || resource.data.authorId == null);
     }
 
     // Chats: Authenticated access
     match /chats/{chatId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if signedIn();
       
       match /messages/{messageId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if signedIn();
       }
     }
     

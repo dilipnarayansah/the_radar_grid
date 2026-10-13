@@ -139,7 +139,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
             onPressed: () async {
               final amt = upiCtrl.text;
               Navigator.pop(ctx);
-              final upiUri = 'upi://pay?pa=spotmerchant@upi&pn=SpotIndustrial&am=$amt&cu=INR';
+              final upiUri = 'upi://pay?pa=escrow_held_gateway&pn=${Uri.encodeComponent(widget.providerName)}&am=$amt&cu=INR';
               final uri = Uri.parse(upiUri);
               final localContext = context;
               try {

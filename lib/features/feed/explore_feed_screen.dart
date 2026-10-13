@@ -128,7 +128,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                   IconButton(
                     icon: const Icon(Icons.notifications_active_outlined, color: Color(0xFF00E5FF), size: 20),
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Spot Live Radar Alert: 3 nodes active nearby')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Spot Live Radar Alert: ${withinRange.length} nodes active nearby')));
                     },
                   ),
                   GestureDetector(
@@ -368,9 +368,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF1E2638))),
               child: Column(
                 children: [
-                  const Text('No active listings in this category. Be the first to post!', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                  const SizedBox(height: 6),
-                  Text(widget.isJobBoardMode ? 'Post the first job requirement or RFQ to receive competitive quotes.' : 'No commercial services found in this sector. Tap + to broadcast your capabilities.', style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 12), textAlign: TextAlign.center),
+                  const Text('No jobs near you yet — post the first one.', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: widget.isJobBoardMode ? const Color(0xFFFF9F1C) : const Color(0xFF00E5FF)),

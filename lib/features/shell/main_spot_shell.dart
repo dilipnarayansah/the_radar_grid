@@ -32,35 +32,7 @@ class _MainSpotShellState extends State<MainSpotShell> {
   final Map<String, List<ChatMessage>> _chats = {};
   String? _errorMessage;
 
-  final List<GridListing> _defaultListings = [
-    GridListing(
-      id: '1',
-      title: 'Apex Industrial Fab & Welding',
-      subtitle: 'Heavy Machinery & Steel Fabrication',
-      category: 'Industrial & Fab',
-      tag: 'VERIFIED PRO',
-      iconEmoji: '🏭',
-      rating: 4.9,
-      reviewsCount: 42,
-      eta: 'Available Today',
-      distanceKm: 0.8,
-      price: '₹450/hr',
-      bio: 'Precision laser cutting, MIG/TIG welding, and industrial fabrication for plant extensions and repairs.',
-      phone: '+919876543210',
-      sector: 'Sector 14 Industrial Zone',
-      type: ListingType.offer,
-      statusText: '• Online Now',
-      latitude: 28.6139,
-      longitude: 77.2090,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
-      authorId: 'apex_fab',
-      conditionTag: 'New',
-      isVerified: true,
-      imageUrls: [
-        'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500',
-      ],
-    ),
-  ];
+  final List<GridListing> _defaultListings = [];
 
   @override
   void initState() {
@@ -81,6 +53,148 @@ class _MainSpotShellState extends State<MainSpotShell> {
       debugPrint('Auth initialization warning: $e');
     }
     if (mounted) setState(() {});
+  }
+
+  void _openPostJobModal() {
+    String selectedTemplate = 'Generator Rewinding';
+    final titleCtrl = TextEditingController(text: 'Generator Rewinding - 250kVA Cummins');
+    final budgetCtrl = TextEditingController(text: '3500');
+    bool hasVoiceBrief = false;
+    int photoCount = 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          backgroundColor: const Color(0xFF10141C),
+          title: const Text('📋 + Post a Job / RFQ', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Select Trade Template:', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  children: ['Generator Rewinding', 'Lathe Job', 'Switch Tripping'].map((template) {
+                    final isSelected = selectedTemplate == template;
+                    return ChoiceChip(
+                      label: Text(template, style: TextStyle(color: isSelected ? Colors.black : Colors.white, fontSize: 11)),
+                      selected: isSelected,
+                      selectedColor: const Color(0xFF00E5FF),
+                      backgroundColor: const Color(0xFF080B10),
+                      onSelected: (val) {
+                        setModalState(() {
+                          selectedTemplate = template;
+                          titleCtrl.text = '$template - Industrial Service';
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleCtrl,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'Job Title / Description',
+                    filled: true,
+                    fillColor: const Color(0xFF080B10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: budgetCtrl,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'Estimated Budget (₹)',
+                    filled: true,
+                    fillColor: const Color(0xFF080B10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('📷 Photo Slots (Up to 3):', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12)),
+                const SizedBox(height: 6),
+                Row(
+                  children: List.generate(3, (index) => Container(
+                    width: 60,
+                    height: 60,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF080B10),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: index < photoCount ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
+                    ),
+                    child: IconButton(
+                      icon: Icon(index < photoCount ? Icons.check_circle : Icons.add_a_photo, color: index < photoCount ? const Color(0xFF00E5FF) : const Color(0xFF8E9BAE), size: 20),
+                      onPressed: () => setModalState(() => photoCount = (photoCount < 3 ? photoCount + 1 : 3)),
+                    ),
+                  )),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: hasVoiceBrief ? Colors.greenAccent : const Color(0xFF1E2638)),
+                      icon: Icon(hasVoiceBrief ? Icons.mic : Icons.mic_none, color: hasVoiceBrief ? Colors.black : Colors.white),
+                      label: Text(hasVoiceBrief ? 'Voice Brief Recorded' : 'Hold to Record Voice Brief', style: TextStyle(color: hasVoiceBrief ? Colors.black : Colors.white, fontSize: 11)),
+                      onPressed: () => setModalState(() => hasVoiceBrief = !hasVoiceBrief),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Color(0xFF8E9BAE)))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
+              onPressed: () async {
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                }
+                if (Firebase.apps.isNotEmpty && _firebaseUser != null) {
+                  try {
+                    FirebaseFirestore.instance.collection('listings').add({
+                      'title': titleCtrl.text.trim(),
+                      'subtitle': selectedTemplate,
+                      'category': 'Urgent RFQs',
+                      'tag': 'WANTED RFQ',
+                      'iconEmoji': selectedTemplate.contains('Generator') ? '⚡' : selectedTemplate.contains('Lathe') ? '⚙️' : '🔌',
+                      'rating': 5.0,
+                      'reviewsCount': 1,
+                      'eta': 'Immediate',
+                      'distanceKm': 1.2,
+                      'price': '₹${budgetCtrl.text}',
+                      'bio': 'Voice brief attached. Professional RFQ posted via Spot 5km radar zone.',
+                      'phone': '+919876543210',
+                      'sector': 'Sector 14 Industrial Hub',
+                      'type': 'need',
+                      'isVerified': true,
+                      'authorId': _firebaseUser!.uid,
+                      'timestamp': FieldValue.serverTimestamp(),
+                      'imageUrls': [],
+                      'conditionTag': 'New',
+                      'isSold': false,
+                    });
+                  } catch (e) {
+                    debugPrint('Post job error: $e');
+                  }
+                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Job RFQ broadcasted to 5km radar zone!')));
+                setState(() {});
+              },
+              child: const Text('Broadcast Job', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _openChat(BuildContext context, String providerName) {
@@ -155,7 +269,7 @@ class _MainSpotShellState extends State<MainSpotShell> {
             onOpenLocationSelector: () {},
             onOpenChat: (name) => _openChat(context, name),
             onTapCard: (item) {},
-            onOpenBroadcastModal: () {},
+            onOpenBroadcastModal: _openPostJobModal,
           ),
           MapRadarView(
             listings: listings,
@@ -176,6 +290,12 @@ class _MainSpotShellState extends State<MainSpotShell> {
         return Scaffold(
           backgroundColor: const Color(0xFF080B10),
           body: screens[_currentIndex],
+          floatingActionButton: FloatingActionButton.extended(
+            backgroundColor: const Color(0xFF00E5FF),
+            onPressed: _openPostJobModal,
+            icon: const Icon(Icons.add, color: Colors.black),
+            label: const Text('+ Post a Job', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (idx) {
