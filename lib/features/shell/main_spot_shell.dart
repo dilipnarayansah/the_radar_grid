@@ -69,7 +69,7 @@ class _MainSpotShellState extends State<MainSpotShell> {
     final titleCtrl = TextEditingController(text: 'Full-Stack Flutter & AI Assistant');
     final rateCtrl = TextEditingController(text: '₹800/hr');
     final budgetCtrl = TextEditingController(text: '5000');
-    final bioCtrl = TextEditingController(text: 'Verified expert in modular architecture and real-time P2P networking.');
+    final bioCtrl = TextEditingController(text: '');
     
     // Service delivery mode: On-Site vs Remote
     String deliveryMode = 'Remote';
@@ -321,7 +321,7 @@ class _MainSpotShellState extends State<MainSpotShell> {
                         'title': titleCtrl.text.trim(),
                         'subtitle': '$selectedSubTrade • ${currentPillar.nameEn}',
                         'category': currentPillar.nameEn,
-                        'tag': isOfferMode ? 'VERIFIED SKILL' : 'WANTED RFQ ($urgencyTier)',
+                        'tag': isOfferMode ? 'OFFERED SKILL' : 'WANTED RFQ ($urgencyTier)',
                         'iconEmoji': currentPillar.iconEmoji,
                         'rating': 5.0,
                         'reviewsCount': 1,
@@ -332,7 +332,7 @@ class _MainSpotShellState extends State<MainSpotShell> {
                         'phone': '+919876543210',
                         'sector': _activeLocationName,
                         'type': isOfferMode ? 'offer' : 'need',
-                        'isVerified': true,
+                        'isVerified': false,
                         'authorId': _firebaseUser!.uid,
                         'timestamp': FieldValue.serverTimestamp(),
                         'imageUrls': [],

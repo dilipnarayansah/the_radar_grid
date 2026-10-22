@@ -19,7 +19,7 @@ class AiCopilotService {
     }
 
     // Professional Heuristic Fallback
-    return '⚡ [Verified Enterprise Grade]: $roughTitle. $roughBio (Clean condition, immediate inspection & neighborhood delivery available).';
+    return '⚡ [Spot Service Brief]: $roughTitle. $roughBio (Clean condition, immediate inspection & neighborhood delivery available).';
   }
 
   static Future<String> estimateFairPrice(String itemTitle, String currentBid) async {

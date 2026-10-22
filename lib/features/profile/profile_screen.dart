@@ -155,16 +155,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  user?.email ?? (user == null || user.isAnonymous ? 'Guest Industrial Partner' : 'Verified Spot Enterprise'),
+                  user?.email ?? 'Spot Member',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
-                const SizedBox(width: 4),
-                const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 16),
               ],
             ),
           ),
           const SizedBox(height: 4),
-          const Center(child: Text('Joined October 2026 • ★ 4.9 Verified Spot Industrial Partner', style: TextStyle(fontSize: 12, color: Color(0xFF8E9BAE)))),
+          const Center(child: Text('Joined October 2026 • Spot Member', style: TextStyle(fontSize: 12, color: Color(0xFF8E9BAE)))),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -237,9 +235,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ListTile(
             tileColor: const Color(0xFF10141C),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF1E2638))),
-            leading: const Icon(Icons.verified_user, color: Color(0xFF00E5FF)),
+            leading: const Icon(Icons.person, color: Color(0xFF00E5FF)),
             title: const Text('Spot Industrial Tier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-            subtitle: const Text('Verified Industrial Showcase • 18 Completed Contracts', style: TextStyle(fontSize: 11, color: Color(0xFF8E9BAE))),
+            subtitle: Text('Industrial Showcase • ${userListings.length} Listings', style: const TextStyle(fontSize: 11, color: Color(0xFF8E9BAE))),
           ),
         ],
       ),

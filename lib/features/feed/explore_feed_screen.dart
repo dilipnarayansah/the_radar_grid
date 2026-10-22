@@ -462,7 +462,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS & NEEDS (${withinRange.length})' : '⚡ SPOT VERIFIED SKILLS & TRADES (${withinRange.length})',
+                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS & NEEDS (${withinRange.length})' : '⚡ AVAILABLE SKILLS & TRADES (${withinRange.length})',
                 style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
               ),
             ],
@@ -475,7 +475,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF1E2638))),
               child: Column(
                 children: [
-                  const Text('No listings found under this trade filter — post a new skill or RFQ.', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const Text('No listings in this category yet. Be the first to post a skill or request!', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: widget.isJobBoardMode ? const Color(0xFFFF9F1C) : const Color(0xFF00E5FF)),

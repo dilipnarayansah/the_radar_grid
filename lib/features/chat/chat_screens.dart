@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:the_radar_grid/models/chat.dart';
 import 'package:the_radar_grid/services/ai_copilot_service.dart';
 
@@ -63,14 +62,14 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   final _textController = TextEditingController();
   final _offerController = TextEditingController(text: '450');
   bool _isAiEstimating = false;
-  bool _handshakeVerified = true;
+  bool _handshakeVerified = false;
   bool _showOfferPanel = false;
 
   final List<String> quickPrompts = [
     'Can you deliver by tomorrow?',
     'What is your lowest bid?',
     'Send commercial specification sheet',
-    'Ready for UPI escrow settlement',
+    'Ready for direct settlement',
   ];
 
   void _send(String text, {bool isSlot = false, bool isUpi = false, bool isPin = false, String? amount}) {
@@ -95,69 +94,25 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
   void _sendOffer() {
     final amt = _offerController.text;
     final handshakeText = _handshakeVerified ? '🔒 [Handshake Verified]' : '';
-    _send('🤝 [MAKE AN OFFER / SEND QUOTE]: ₹$amt/hr $handshakeText - AI Fair Price verified.');
+    _send('🤝 [MAKE AN OFFER / SEND QUOTE]: ₹$amt/hr $handshakeText');
     setState(() => _showOfferPanel = false);
   }
 
   void _openUpiSettlementModal() {
-    final upiCtrl = TextEditingController(text: _offerController.text);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF10141C),
-        title: const Text('💳 Zero-Fee UPI Settlement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Scan dynamic QR or trigger UPI intent for instant zero-fee settlement.', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12)),
-            const SizedBox(height: 12),
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-              alignment: Alignment.center,
-              child: const Icon(Icons.qr_code_2, size: 100, color: Colors.black),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: upiCtrl,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Amount in ₹',
-                filled: true,
-                fillColor: const Color(0xFF080B10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              ),
-            ),
-          ],
+        title: const Text('Direct Settlement', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+        content: const Text(
+          'In-app digital escrow is currently in private testing. Please settle payment directly with the provider upon verified completion of work.',
+          style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Color(0xFF8E9BAE)))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E5FF)),
-            onPressed: () async {
-              final amt = upiCtrl.text;
-              Navigator.pop(ctx);
-              final upiUri = 'upi://pay?pa=escrow_held_gateway&pn=${Uri.encodeComponent(widget.providerName)}&am=$amt&cu=INR';
-              final uri = Uri.parse(upiUri);
-              final localContext = context;
-              try {
-                final canOpen = await canLaunchUrl(uri);
-                if (!localContext.mounted) return;
-                if (canOpen) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                } else {
-                  ScaffoldMessenger.of(localContext).showSnackBar(const SnackBar(content: Text('UPI Intent triggered. Zero-fee settlement successful!')));
-                }
-              } catch (e) {
-                if (!localContext.mounted) return;
-                ScaffoldMessenger.of(localContext).showSnackBar(SnackBar(content: Text('UPI Settlement completed for ₹$amt')));
-              }
-              if (!localContext.mounted) return;
-              _send('💳 [UPI Zero-Fee Settled]: ₹$amt via UPI Intent & Verified PIN.', isUpi: true, amount: amt);
-            },
-            child: const Text('Pay via UPI / GPay', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Understood', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -289,11 +244,7 @@ class _ActiveChatScreenState extends State<ActiveChatScreen> {
                           const Text('Secure P2P Handshake Verification', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 11)),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: const Color(0xFF0E272B), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFF00E5FF))),
-                        child: const Text('✨ AI Fair Price Verified', style: TextStyle(color: Color(0xFF00E5FF), fontSize: 9, fontWeight: FontWeight.bold)),
-                      ),
+                      const Text('Estimated Rate (Subject to agreement)', style: TextStyle(color: Color(0xFF8E9BAE), fontSize: 9, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],

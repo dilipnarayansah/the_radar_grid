@@ -136,7 +136,7 @@ void main() {
         ),
       ));
 
-      expect(find.text('Guest Industrial Partner'), findsOneWidget);
+      expect(find.text('Spot Member'), findsWidgets);
       expect(find.text('Sign In / Register Account'), findsOneWidget);
     });
   });
