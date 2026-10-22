@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:the_radar_grid/models/listing.dart';
+import 'package:the_radar_grid/models/categories.dart';
 import 'package:the_radar_grid/features/feed/widgets/spot_listing_card.dart';
 
-// ---------------- TAB 1: EXPLORE FEED WITH COLLAPSIBLE MAP & CATEGORY RIBBON ----------------
+// ---------------- TAB 1: EXPLORE FEED WITH UNIVERSAL TAXONOMY & RADAR SYNC ----------------
 class ExploreFeedScreen extends StatefulWidget {
   final List<GridListing> listings;
   final String activeLocation;
@@ -15,6 +16,8 @@ class ExploreFeedScreen extends StatefulWidget {
   final User? currentUser;
   final String? errorMessage;
   final bool isJobBoardMode;
+  final String selectedPillarId;
+  final String? selectedSubTrade;
   final Function(bool) onToggleJobMode;
   final Function(double) onRadiusChanged;
   final VoidCallback onToggleSimpleMode;
@@ -23,6 +26,8 @@ class ExploreFeedScreen extends StatefulWidget {
   final Function(String) onOpenChat;
   final Function(GridListing) onTapCard;
   final VoidCallback onOpenBroadcastModal;
+  final Function(String) onPillarChanged;
+  final Function(String?) onSubTradeChanged;
 
   const ExploreFeedScreen({
     super.key,
@@ -35,6 +40,8 @@ class ExploreFeedScreen extends StatefulWidget {
     required this.currentUser,
     required this.errorMessage,
     required this.isJobBoardMode,
+    required this.selectedPillarId,
+    required this.selectedSubTrade,
     required this.onToggleJobMode,
     required this.onRadiusChanged,
     required this.onToggleSimpleMode,
@@ -43,6 +50,8 @@ class ExploreFeedScreen extends StatefulWidget {
     required this.onOpenChat,
     required this.onTapCard,
     required this.onOpenBroadcastModal,
+    required this.onPillarChanged,
+    required this.onSubTradeChanged,
   });
 
   @override
@@ -50,18 +59,8 @@ class ExploreFeedScreen extends StatefulWidget {
 }
 
 class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
-  String _selectedCategory = 'All';
   String _searchQuery = '';
   bool _isRadarCollapsed = false;
-
-  final List<String> categories = [
-    'All',
-    'Industrial & Fab',
-    'Electrical',
-    'Repairs & AC',
-    'Tech & Design',
-    'Urgent RFQs',
-  ];
 
   Future<void> _launchUrlSafe(String urlStr) async {
     try {
@@ -76,16 +75,41 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Find selected pillar object if not 'All'
+    MarketplacePillar? currentPillar;
+    if (widget.selectedPillarId != 'All') {
+      try {
+        currentPillar = UniversalTaxonomy.pillars.firstWhere((p) => p.id == widget.selectedPillarId);
+      } catch (_) {}
+    }
+
     final withinRange = widget.listings.where((item) {
-      final matchesJobMode = widget.isJobBoardMode ? (item.type == ListingType.need || item.category == 'Urgent RFQs') : (item.type == ListingType.offer);
-      final matchesCategory = _selectedCategory == 'All' ||
-          item.category.toLowerCase() == _selectedCategory.toLowerCase() ||
-          item.category.toLowerCase().contains(_selectedCategory.toLowerCase());
+      final matchesJobMode = widget.isJobBoardMode
+          ? (item.type == ListingType.need || item.category == 'Urgent RFQs' || item.tag.contains('RFQ') || item.tag.contains('WANTED'))
+          : (item.type == ListingType.offer || item.type == ListingType.tool);
+
+      bool matchesPillar = true;
+      if (widget.selectedPillarId != 'All' && currentPillar != null) {
+        final pillarName = currentPillar.nameEn.toLowerCase();
+        final itemCat = item.category.toLowerCase();
+        final itemSub = item.subtitle.toLowerCase();
+        final matchesPillarName = itemCat.contains(pillarName) || itemSub.contains(pillarName);
+        
+        final matchesSub = widget.selectedSubTrade == null ||
+            itemCat.contains(widget.selectedSubTrade!.toLowerCase()) ||
+            itemSub.contains(widget.selectedSubTrade!.toLowerCase()) ||
+            item.title.toLowerCase().contains(widget.selectedSubTrade!.toLowerCase());
+
+        matchesPillar = matchesPillarName || matchesSub;
+      }
+
       final matchesSearch = _searchQuery.isEmpty ||
           item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.bio.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.sector.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchesJobMode && matchesCategory && matchesSearch;
+          item.sector.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          item.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
+
+      return matchesJobMode && matchesPillar && matchesSearch;
     }).toList();
 
     return SafeArea(
@@ -162,7 +186,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'SERVICES AVAILABLE',
+                        'OFFERED SKILLS & TRADES',
                         style: TextStyle(
                           color: !widget.isJobBoardMode ? Colors.black : const Color(0xFF8E9BAE),
                           fontSize: 11,
@@ -183,7 +207,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'WANTED / RFQS',
+                        'CLIENT RFQS & NEEDS',
                         style: TextStyle(
                           color: widget.isJobBoardMode ? Colors.black : const Color(0xFF8E9BAE),
                           fontSize: 11,
@@ -198,7 +222,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Search Bar
+          // Search Bar & Dual-Intent Post Button
           Row(
             children: [
               Expanded(
@@ -219,7 +243,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           onChanged: (val) => setState(() => _searchQuery = val),
                           style: const TextStyle(color: Colors.white, fontSize: 13),
                           decoration: const InputDecoration(
-                            hintText: 'Search services & RFQs near you...',
+                            hintText: 'Search universal trades, skills & RFQs...',
                             hintStyle: TextStyle(color: Color(0xFF8E9BAE), fontSize: 12),
                             border: InputBorder.none,
                             isDense: true,
@@ -247,7 +271,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Collapsible Radar Card: Integrated container showing dark radar sweep with live pin markers
+          // Collapsible Radar Card
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -264,7 +288,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       children: [
                         Icon(Icons.radar, color: Color(0xFF00E5FF), size: 16),
                         SizedBox(width: 6),
-                        Text('LIVE P2P RADAR SWEEP', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                        Text('LIVE P2P RADAR SWEEP (SYNCED)', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
                       ],
                     ),
                     GestureDetector(
@@ -286,7 +310,6 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Concentric Radar Rings
                         Container(
                           width: 80,
                           height: 80,
@@ -298,13 +321,12 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                           decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.15))),
                         ),
                         const Icon(Icons.my_location, color: Color(0xFF00E5FF), size: 18),
-                        // Live pin markers on radar
                         const Positioned(top: 20, left: 40, child: Icon(Icons.circle, color: Color(0xFF00E5FF), size: 8)),
                         const Positioned(bottom: 25, right: 50, child: Icon(Icons.circle, color: Color(0xFFFF9F1C), size: 8)),
                         Positioned(
                           bottom: 8,
                           left: 10,
-                          child: Text('${withinRange.length} nodes active within ${widget.radarRadius}km', style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10)),
+                          child: Text('${withinRange.length} nodes active within ${widget.radarRadius}km (${widget.selectedPillarId})', style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10)),
                         ),
                       ],
                     ),
@@ -315,39 +337,124 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Horizontally Scrollable Category Ribbon with subtle active border
+          // Master Pillar Bar (Horizontally Scrollable)
           SizedBox(
-            height: 38,
-            child: ListView.separated(
+            height: 42,
+            child: ListView(
               scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final cat = categories[index];
-                final isSelected = _selectedCategory == cat;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedCategory = cat),
+              children: [
+                // 'All' Pillar Option
+                GestureDetector(
+                  onTap: () {
+                    widget.onPillarChanged('All');
+                    widget.onSubTradeChanged(null);
+                  },
                   child: Container(
+                    margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF0E272B) : const Color(0xFF10141C),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
+                      color: widget.selectedPillarId == 'All' ? const Color(0xFF0E272B) : const Color(0xFF10141C),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: widget.selectedPillarId == 'All' ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
                     ),
-                    child: Text(
-                      cat,
-                      style: TextStyle(
-                        color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF8E9BAE),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                    child: const Text('🌟 All Pillars', style: TextStyle(color: Color(0xFF00E5FF), fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                ...UniversalTaxonomy.pillars.map((pillar) {
+                  final isSelected = widget.selectedPillarId == pillar.id;
+                  return GestureDetector(
+                    onTap: () {
+                      widget.onPillarChanged(pillar.id);
+                      widget.onSubTradeChanged(null);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF0E272B) : const Color(0xFF10141C),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(pillar.iconEmoji, style: const TextStyle(fontSize: 13)),
+                          const SizedBox(width: 6),
+                          Text(
+                            pillar.nameEn,
+                            style: TextStyle(
+                              color: isSelected ? const Color(0xFF00E5FF) : const Color(0xFF8E9BAE),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                }),
+              ],
             ),
           ),
+
+          // Nested Sub-Trade Chips Bar (Rendered dynamically when a pillar is selected)
+          if (currentPillar != null && currentPillar.subTrades.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 36,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  GestureDetector(
+                    onTap: () => widget.onSubTradeChanged(null),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: widget.selectedSubTrade == null ? const Color(0xFF1A2634) : const Color(0xFF0D1117),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: widget.selectedSubTrade == null ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
+                      ),
+                      child: Text('All ${currentPillar.nameEn}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  ...currentPillar.subTrades.map((sub) {
+                    final isSubSelected = widget.selectedSubTrade == sub.nameEn;
+                    return GestureDetector(
+                      onTap: () => widget.onSubTradeChanged(sub.nameEn),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSubSelected ? const Color(0xFF1A2634) : const Color(0xFF0D1117),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isSubSelected ? const Color(0xFF00E5FF) : const Color(0xFF1E2638)),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(sub.iconEmoji, style: const TextStyle(fontSize: 12)),
+                            const SizedBox(width: 4),
+                            Text(
+                              sub.nameEn,
+                              style: TextStyle(
+                                color: isSubSelected ? const Color(0xFF00E5FF) : const Color(0xFF8E9BAE),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 16),
 
           // Feed Header
@@ -355,7 +462,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS (${withinRange.length})' : '⚡ SPOT SERVICES AVAILABLE (${withinRange.length})',
+                widget.isJobBoardMode ? '📋 ACTIVE CLIENT RFQS & NEEDS (${withinRange.length})' : '⚡ SPOT VERIFIED SKILLS & TRADES (${withinRange.length})',
                 style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
               ),
             ],
@@ -368,12 +475,12 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
               decoration: BoxDecoration(color: const Color(0xFF10141C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF1E2638))),
               child: Column(
                 children: [
-                  const Text('No jobs near you yet — post the first one.', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const Text('No listings found under this trade filter — post a new skill or RFQ.', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: widget.isJobBoardMode ? const Color(0xFFFF9F1C) : const Color(0xFF00E5FF)),
                     onPressed: widget.onOpenBroadcastModal,
-                    child: Text(widget.isJobBoardMode ? 'Post Client Job RFQ' : 'Post Spot Service Listing', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(widget.isJobBoardMode ? 'Post Client Job RFQ' : 'Offer a Skill / Service', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),

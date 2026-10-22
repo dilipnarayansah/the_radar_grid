@@ -1,11 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:the_radar_grid/models/user.dart';
+import 'package:the_radar_grid/models/categories.dart';
 import 'package:the_radar_grid/features/feed/widgets/spot_listing_card.dart';
 import 'package:the_radar_grid/features/profile/profile_screen.dart';
 import 'mock_listings_dataset.dart';
 
 void main() {
+  group('Universal Taxonomy Unit Tests', () {
+    test('UniversalTaxonomy should contain exactly 6 core pillars with EN/Hi localization', () {
+      expect(UniversalTaxonomy.pillars.length, 6);
+      
+      final pillarIds = UniversalTaxonomy.pillars.map((p) => p.id).toList();
+      expect(pillarIds, containsAll([
+        'tech_digital',
+        'education_academics',
+        'applied_trades',
+        'creative_media',
+        'commerce_professional',
+        'home_lifestyle',
+      ]));
+
+      for (var pillar in UniversalTaxonomy.pillars) {
+        expect(pillar.nameEn.isNotEmpty, isTrue);
+        expect(pillar.nameHi.isNotEmpty, isTrue);
+        expect(pillar.subTrades.isNotEmpty, isTrue);
+        for (var sub in pillar.subTrades) {
+          expect(sub.nameEn.isNotEmpty, isTrue);
+          expect(sub.nameHi.isNotEmpty, isTrue);
+        }
+      }
+    });
+  });
+
   group('UserProfile Unit Tests', () {
     test('UserProfile.fromMap should correctly parse production-shaped JSON', () {
       final mockJson = {
