@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:the_radar_grid/models/listing.dart';
 import 'package:the_radar_grid/models/categories.dart';
 import 'package:the_radar_grid/features/feed/widgets/spot_listing_card.dart';
@@ -61,6 +64,38 @@ class ExploreFeedScreen extends StatefulWidget {
 class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
   String _searchQuery = '';
   bool _isRadarCollapsed = false;
+  LatLng _currentPosition = const LatLng(28.6139, 77.2090);
+  String _detectedLocation = 'Sector 14 Industrial Hub';
+
+  @override
+  void initState() {
+    super.initState();
+    _determinePosition();
+  }
+
+  Future<void> _determinePosition() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      if (mounted) {
+        setState(() {
+          _currentPosition = LatLng(position.latitude, position.longitude);
+          _detectedLocation = 'GPS (${position.latitude.toStringAsFixed(2)}, ${position.longitude.toStringAsFixed(2)})';
+        });
+      }
+    } catch (e) {
+      debugPrint('Location error: $e');
+    }
+  }
 
   Future<void> _launchUrlSafe(String urlStr) async {
     try {
@@ -141,7 +176,7 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                       children: [
                         const Icon(Icons.location_on, color: Color(0xFF00E5FF), size: 11),
                         const SizedBox(width: 2),
-                        Text(widget.activeLocation, style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text(_detectedLocation != 'Sector 14 Industrial Hub' ? _detectedLocation : widget.activeLocation, style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -300,35 +335,91 @@ class _ExploreFeedScreenState extends State<ExploreFeedScreen> {
                 if (!_isRadarCollapsed) ...[
                   const SizedBox(height: 10),
                   Container(
-                    height: 120,
+                    height: 180,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: const Color(0xFF080B10),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFF1E2638)),
                     ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.3))),
-                        ),
-                        Container(
-                          width: 116,
-                          height: 116,
-                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.15))),
-                        ),
-                        const Icon(Icons.my_location, color: Color(0xFF00E5FF), size: 18),
-                        const Positioned(top: 20, left: 40, child: Icon(Icons.circle, color: Color(0xFF00E5FF), size: 8)),
-                        const Positioned(bottom: 25, right: 50, child: Icon(Icons.circle, color: Color(0xFFFF9F1C), size: 8)),
-                        Positioned(
-                          bottom: 8,
-                          left: 10,
-                          child: Text('${withinRange.length} nodes active within ${widget.radarRadius}km (${widget.selectedPillarId})', style: const TextStyle(color: Color(0xFF8E9BAE), fontSize: 10)),
-                        ),
-                      ],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
+                        children: [
+                          FlutterMap(
+                            options: MapOptions(
+                              initialCenter: _currentPosition,
+                              initialZoom: 14.0,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.all,
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png',
+                                subdomains: const ['a', 'b', 'c', 'd'],
+                                userAgentPackageName: 'com.the_radar_grid.app',
+                              ),
+                              CircleLayer(
+                                circles: [
+                                  CircleMarker(
+                                    point: _currentPosition,
+                                    color: const Color(0xFF00E5FF).withValues(alpha: 0.08),
+                                    borderColor: const Color(0xFF00E5FF).withValues(alpha: 0.4),
+                                    borderStrokeWidth: 1.5,
+                                    radius: widget.radarRadius * 1500,
+                                    useRadiusInMeter: false,
+                                  ),
+                                ],
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: _currentPosition,
+                                    width: 36,
+                                    height: 36,
+                                    child: const Icon(Icons.my_location, color: Color(0xFF00E5FF), size: 22),
+                                  ),
+                                  ...withinRange.where((item) => item.latitude != null && item.longitude != null).map((item) {
+                                    return Marker(
+                                      point: LatLng(item.latitude!, item.longitude!),
+                                      width: 32,
+                                      height: 32,
+                                      child: GestureDetector(
+                                        onTap: () => widget.onTapCard(item),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF10141C),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: const Color(0xFF00E5FF), width: 1.2),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(item.iconEmoji, style: const TextStyle(fontSize: 12)),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            left: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${withinRange.length} nodes active within ${widget.radarRadius}km (${widget.selectedPillarId})',
+                                style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
